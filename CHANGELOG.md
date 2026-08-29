@@ -4,6 +4,71 @@ Notable changes are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] — 2026-08-29
+
+### Added
+
+- **A restore point at every system start.** A checkbox under the green button registers a
+  scheduled task that creates a point the chosen number of minutes after each boot, 1 to 30,
+  five by default. Windows already asks for one — `PITRTask` has a boot trigger with a thirty
+  minute delay — but that request waits for the system to go idle, which a machine that just
+  started is not. The task forces the run the same way the button does, and the Windows task
+  itself is left alone.
+- **A warning when the startup task runs an older copy.** The task remembers one fixed path,
+  so a copy in `ProgramData` keeps running while a newer version is started from elsewhere —
+  silently, and for as long as nobody looks. The window now compares the two on every refresh
+  and offers to refresh the copy in place, keeping the delay that was set. Versions are read
+  from the file itself; when they match but the contents do not, the checksums decide.
+  `autostart status` reports the same thing on the command line.
+- `pitr-config.cmd snapshot` — creates a restore point without a window, for scripts and for
+  the startup task itself.
+- `pitr-config.cmd autostart on delay=5m` / `off` / `status`.
+- **A duration column in the restore point list.** Windows records the length of a snapshot
+  nowhere — neither `Win32_ShadowCopy` nor the volume snapshot log knows a timespan; the pairs
+  in that log describe volumes going online and offline. The one source is the Task Scheduler
+  history: events 100 and 102 carry the same instance id, and their difference is the runtime
+  of `PITRTask`. A point belongs to the run whose window contains its timestamp.
+  That history is off by default in Windows. While it is, the column stays empty and a line
+  under the list offers to switch it on, saying what that changes — a system-wide logging
+  setting, and only for runs from then on. The tool never switches it on by itself.
+- **How long a snapshot took**, in the log: the runtime of the task from start until it is
+  back to *Ready*, which is the time Windows spends on the shadow copy. Resolution is the
+  1.5 seconds of the polling loop. If the wait runs out before the task finishes, the log says
+  so instead of reporting a duration — that number would be the waiting time, not the
+  snapshot's.
+
+### Fixed
+
+- **The window now appears before the data does.** Reading the scheduled task, VSS and the
+  registry takes one to two seconds, and until now all of it happened before anything was on
+  screen — which looks exactly like nothing happening. The fields start with a *reading…*
+  placeholder and fill as soon as the window has been drawn: visible after roughly 0.4 s,
+  filled about 1.9 s later.
+- **The recovery partition figures cost 1.7 seconds of that.** `Get-Partition` and `Get-Volume`
+  load the Storage module on first use; the same information straight from the
+  `root/Microsoft/Windows/Storage` CIM namespace needs 200 ms and no module at all.
+- The window took noticeably longer to open once the task history was on. The duration lookup
+  fetched 600 events and picked out the PITRTask ones in PowerShell — and parsing an event
+  costs about a millisecond, so that was 600 ms of startup for six useful events. The filter
+  now runs inside the event log (`-FilterXPath` on the task name), which brings it to 15 ms and
+  keeps it there however full the log gets.
+
+### Notes
+
+- The task runs as `SYSTEM` with a boot trigger, so it fires without anyone signing in.
+- **A startup snapshot cannot work from a network share.** `SYSTEM` reaches the network as the
+  computer account, not as the signed-in person, so a share that opens fine in Explorer is
+  usually out of reach for the task. Switching the checkbox on from such a path now offers to
+  copy the file to `%ProgramData%\pitr-config\` and register the task against that copy;
+  `autostart on copy` does the same from the command line.
+- With Fast Startup enabled, shutting down and switching on again is a resume, not a boot, and
+  boot triggers do not fire. A restart does trigger it. This cannot be worked around from a
+  tool.
+- Nothing comparable is offered for shutdown, deliberately: Task Scheduler has no shutdown
+  trigger, an event-triggered task gets killed halfway through the snapshot, and a Group Policy
+  shutdown script would hold up the shutdown for as long as VSS needs. A point taken at
+  shutdown would also differ very little from one taken twenty minutes earlier.
+
 ## [1.5.0] — 2026-08-28
 
 ### Added

@@ -15,6 +15,9 @@ rem  window, no administrator rights, and nothing is written.
 rem
 rem  The argument "noupdate" skips the check for a newer version on start.
 rem
+rem  "snapshot" creates a restore point without a window; "autostart on delay=5m"
+rem  registers a task that does exactly that a few minutes after every system start.
+rem
 rem  Running it as "apply" writes settings without a window, for startup scripts:
 rem      pitr-config.cmd apply freq=4h reten=5d size=20g active=on
 rem  It needs an elevated prompt and does not elevate itself - see the note further down.
@@ -28,6 +31,8 @@ setlocal
 
 if /i "%~1"=="selftest" goto :selftest
 if /i "%~1"=="apply"    goto :apply
+if /i "%~1"=="snapshot"  goto :snapshot
+if /i "%~1"=="autostart" goto :autostart
 
 rem  Started from a network share, cmd.exe prints a warning of its own before the first
 rem  line here runs: UNC paths are not supported as the current directory, and it falls
@@ -88,6 +93,30 @@ set "PITR_ARGS=%*"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$m='#___PSCODE___'; $t=[IO.File]::ReadAllText($env:PITR_SELF,[Text.UTF8Encoding]::new($false)); $sb=[scriptblock]::Create($t.Substring($t.LastIndexOf($m)+$m.Length)); & $sb -Apply -Options $env:PITR_ARGS"
 exit /b %errorlevel%
 
+rem  Legt sofort einen Wiederherstellungspunkt an, ohne Fenster. Das ist der Aufruf,
+rem  den die Startaufgabe verwendet - und der sich in jedem eigenen Skript benutzen
+rem  laesst. Braucht wie "apply" eine erhoehte Eingabeaufforderung.
+:snapshot
+net session >nul 2>&1
+if not "%errorlevel%"=="0" (
+  echo pitr-config: administrator rights are required for "snapshot".
+  exit /b 5
+)
+set "PITR_SELF=%~f0"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$m='#___PSCODE___'; $t=[IO.File]::ReadAllText($env:PITR_SELF,[Text.UTF8Encoding]::new($false)); $sb=[scriptblock]::Create($t.Substring($t.LastIndexOf($m)+$m.Length)); & $sb -Snapshot"
+exit /b %errorlevel%
+
+:autostart
+net session >nul 2>&1
+if not "%errorlevel%"=="0" (
+  echo pitr-config: administrator rights are required for "autostart".
+  exit /b 5
+)
+set "PITR_SELF=%~f0"
+set "PITR_ARGS=%*"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$m='#___PSCODE___'; $t=[IO.File]::ReadAllText($env:PITR_SELF,[Text.UTF8Encoding]::new($false)); $sb=[scriptblock]::Create($t.Substring($t.LastIndexOf($m)+$m.Length)); & $sb -AutoStart -Options $env:PITR_ARGS"
+exit /b %errorlevel%
+
 #___PSCODE___
 <#
     Point-in-time restore (PITR) / Zeitpunktwiederherstellung
@@ -114,14 +143,18 @@ exit /b %errorlevel%
     PITR.dll and RemoteRemediationCSP.dll and verified in practice.
 #>
 
-param([switch]$SelfTest, [switch]$Apply, [string]$Options = '')
+param([switch]$SelfTest, [switch]$Apply, [switch]$Snapshot, [switch]$AutoStart,
+      [string]$Options = '')
+
+# Wird von den kopflosen Zweigen gesetzt und von Write-Log/Update-Ui abgefragt.
+$script:Headless = $false
 
 $ErrorActionPreference = 'Stop'
 
 # The one place the version is defined. It appears under the headline in the window
 # and in the selftest; a release is tagged with "v" followed by this value. Keeping
 # it out of the batch header above avoids having two numbers that can drift apart.
-$Version  = '1.5.0'
+$Version  = '1.6.0'
 
 # Asked on start unless PITR_NOUPDATE is set. Returns the newest release of the project.
 $UpdateApi = 'https://api.github.com/repos/henmedia/windows-pitr-config/releases/latest'
@@ -215,6 +248,21 @@ en = @{
     colAge     = 'Age'
     colStatus  = 'Status'
     colBuild   = 'Build'
+    colDur     = 'Duration'
+    histHint   = 'Windows does not record how long a snapshot took unless the Task Scheduler history is switched on. It logs every scheduled task on this machine, and it only covers runs from then on.'
+    btnHist    = 'Enable task history'
+    askHist    = 'Switch the Task Scheduler history on? This is a Windows-wide setting: from then on every scheduled task on this machine is logged into a 10 MB ring buffer. Existing restore points still get no duration - only runs from now on.'
+    askHistT   = 'Task history'
+    logHistOn  = 'Task history switched on. Durations appear from the next run onwards.'
+    logHistErr = 'Could not switch the task history on.'
+    askCopy    = 'This file is on a network share or a removable drive. The task runs as SYSTEM, which reaches the network as the computer account and not as you - that is why a startup snapshot from a share usually fails even when the share opens fine for you.{0}{0}Copy the file to {1} and register the task from there?{0}{0}Yes: copy and use the local file. No: register it with the current path anyway. Cancel: do not register.'
+    askCopyT   = 'Startup snapshot'
+    logCopyOk  = 'Copied to {0} - the task uses that file.'
+    loading    = 'reading...'
+    staleOld   = 'The startup task still runs version {0} from {1}. This one is {2}.'
+    staleGone  = 'The startup task points at {0}, and that file is no longer there.'
+    btnAutoUpd = 'Refresh the copy'
+    logAutoUpd = 'Copy refreshed: {0} now holds version {1}.'
     stShadowOk = 'shadow copy present'
     stRegOnly  = 'registry entry only'
     stUnknown  = 'unknown (needs admin rights)'
@@ -235,6 +283,9 @@ en = @{
     unitDay    = 'day'
     unitDays   = 'days'
     unitMin    = 'minutes'
+    unitMin1   = 'minute'
+    unitMinShort = 'min'
+    unitHourShort = 'h'
 
     btnReset   = 'Reset everything'
     btnRefresh = 'Refresh'
@@ -243,6 +294,12 @@ en = @{
     btnSnapNow = 'Create snapshot now'
     snapHint   = 'Creates a restore point right away, whatever the schedule says. The settings below stay untouched.'
     tipSnapNow = 'Runs PITRTask once, even while the machine is in use. Nothing is written to the configuration.'
+    chkAuto    = 'At every system start'
+    autoHint   = 'Windows asks for a point at startup by itself, but that request waits for the system to go idle - and a machine that just booted is anything but. This forces it.'
+    tipAuto    = 'Registers a scheduled task that creates a restore point the chosen number of minutes after every system start. Runs as SYSTEM, no logon needed.'
+    logAutoOn  = 'Startup snapshot registered: {0} minutes after boot.'
+    logAutoOff = 'Startup snapshot removed.'
+    warnPath   = 'This file is not on a fixed local drive. The task stores its path and may not reach it at boot time.'
     grpLog     = 'Log'
 
     effective  = 'Currently effective'
@@ -271,6 +328,8 @@ en = @{
     logIdleBad = 'WARNING: could not restore the idle condition!'
     logDone    = 'Done. Result'
     logNextRun = 'next run'
+    logTook    = 'took {0}'
+    logNoFinish= 'still busy after {0} - the point is being finished in the background.'
     logRemoved = 'removed'
     logNothing = 'No values were set.'
     logError   = 'Error'
@@ -339,6 +398,21 @@ de = @{
     colAge     = 'Alter'
     colStatus  = 'Status'
     colBuild   = 'Build'
+    colDur     = 'Dauer'
+    histHint   = 'Windows hält nicht fest, wie lange ein Schnappschuss gedauert hat, solange der Aufgabenverlauf abgeschaltet ist. Er protokolliert jede geplante Aufgabe dieses Rechners und erfasst nur Läufe ab dem Einschalten.'
+    btnHist    = 'Aufgabenverlauf einschalten'
+    askHist    = 'Den Aufgabenverlauf einschalten? Das ist eine systemweite Windows-Einstellung: Ab dann wird jede geplante Aufgabe dieses Rechners in einen 10-MB-Ringpuffer protokolliert. Vorhandene Wiederherstellungspunkte bekommen weiterhin keine Dauer, nur die Läufe ab jetzt.'
+    askHistT   = 'Aufgabenverlauf'
+    logHistOn  = 'Aufgabenverlauf eingeschaltet. Die Dauer erscheint ab dem nächsten Lauf.'
+    logHistErr = 'Der Aufgabenverlauf ließ sich nicht einschalten.'
+    askCopy    = 'Diese Datei liegt auf einer Netzwerkfreigabe oder einem Wechseldatenträger. Die Aufgabe läuft als SYSTEM und erreicht das Netzwerk als Computerkonto, nicht als du selbst - deshalb scheitert ein Startschnappschuss von einer Freigabe meist, obwohl sie sich für dich problemlos öffnen lässt.{0}{0}Die Datei nach {1} kopieren und die Aufgabe von dort aus einrichten?{0}{0}Ja: kopieren und die lokale Datei verwenden. Nein: trotzdem mit dem jetzigen Pfad einrichten. Abbrechen: nicht einrichten.'
+    askCopyT   = 'Startschnappschuss'
+    logCopyOk  = 'Nach {0} kopiert - die Aufgabe verwendet diese Datei.'
+    loading    = 'wird gelesen...'
+    staleOld   = 'Die Startaufgabe führt weiterhin Version {0} aus {1} aus. Diese hier ist {2}.'
+    staleGone  = 'Die Startaufgabe zeigt auf {0}, und diese Datei gibt es nicht mehr.'
+    btnAutoUpd = 'Kopie aktualisieren'
+    logAutoUpd = 'Kopie aktualisiert: In {0} liegt jetzt Version {1}.'
     stShadowOk = 'Schattenkopie vorhanden'
     stRegOnly  = 'nur Registry-Eintrag'
     stUnknown  = 'unbekannt (Adminrechte nötig)'
@@ -359,6 +433,9 @@ de = @{
     unitDay    = 'Tag'
     unitDays   = 'Tage'
     unitMin    = 'Minuten'
+    unitMin1   = 'Minute'
+    unitMinShort = 'Min.'
+    unitHourShort = 'Std.'
 
     btnReset   = 'Alles zurücksetzen'
     btnRefresh = 'Aktualisieren'
@@ -367,6 +444,12 @@ de = @{
     btnSnapNow = 'Schnappschuss jetzt erstellen'
     snapHint   = 'Erzeugt sofort einen Wiederherstellungspunkt, unabhängig vom Zeitplan. Die Einstellungen unten bleiben unberührt.'
     tipSnapNow = 'Führt PITRTask einmal aus, auch während der Rechner benutzt wird. An der Konfiguration ändert sich nichts.'
+    chkAuto    = 'Bei jedem Systemstart'
+    autoHint   = 'Windows fordert beim Start von sich aus einen Punkt an, doch die Anforderung wartet auf den Leerlauf - und ein frisch gestarteter Rechner ist alles andere als das. Dies erzwingt sie.'
+    tipAuto    = 'Richtet eine geplante Aufgabe ein, die die gewählte Anzahl Minuten nach jedem Systemstart einen Wiederherstellungspunkt anlegt. Läuft als SYSTEM, eine Anmeldung ist nicht nötig.'
+    logAutoOn  = 'Startschnappschuss eingerichtet: {0} Minuten nach dem Start.'
+    logAutoOff = 'Startschnappschuss entfernt.'
+    warnPath   = 'Diese Datei liegt nicht auf einem festen lokalen Laufwerk. Die Aufgabe merkt sich den Pfad und erreicht ihn beim Start womöglich nicht.'
     grpLog     = 'Protokoll'
 
     effective  = 'Aktuell wirksam'
@@ -395,6 +478,8 @@ de = @{
     logIdleBad = 'WARNUNG: Leerlauf-Bedingung konnte nicht wiederhergestellt werden!'
     logDone    = 'Fertig. Ergebnis'
     logNextRun = 'nächster Lauf'
+    logTook    = 'Dauer {0}'
+    logNoFinish= 'läuft nach {0} noch - der Punkt wird im Hintergrund fertiggestellt.'
     logRemoved = 'entfernt'
     logNothing = 'Es waren keine Werte gesetzt.'
     logError   = 'Fehler'
@@ -465,6 +550,21 @@ fr = @{
     colAge     = 'Âge'
     colStatus  = 'État'
     colBuild   = 'Build'
+    colDur     = 'Durée'
+    histHint   = 'Windows n''enregistre pas la durée d''un instantané tant que l''historique du planificateur de tâches est désactivé. Celui-ci journalise toutes les tâches planifiées de la machine et ne couvre que les exécutions à partir de son activation.'
+    btnHist    = 'Activer l''historique'
+    askHist    = 'Activer l''historique du planificateur de tâches ? Il s''agit d''un réglage global de Windows : toutes les tâches planifiées de cette machine seront journalisées dans un tampon circulaire de 10 Mo. Les points de restauration existants n''auront toujours pas de durée.'
+    askHistT   = 'Historique des tâches'
+    logHistOn  = 'Historique activé. La durée apparaîtra à partir de la prochaine exécution.'
+    logHistErr = 'Impossible d''activer l''historique des tâches.'
+    askCopy    = 'Ce fichier se trouve sur un partage réseau ou un support amovible. La tâche s''exécute en tant que SYSTEM et atteint le réseau via le compte d''ordinateur, pas via votre compte - c''est pourquoi un instantané au démarrage depuis un partage échoue le plus souvent, même si le partage s''ouvre sans problème.{0}{0}Copier le fichier vers {1} et enregistrer la tâche à partir de là ?{0}{0}Oui : copier et utiliser le fichier local. Non : enregistrer malgré tout avec le chemin actuel. Annuler : ne pas enregistrer.'
+    askCopyT   = 'Instantané au démarrage'
+    logCopyOk  = 'Copié vers {0} - la tâche utilise ce fichier.'
+    loading    = 'lecture...'
+    staleOld   = 'La tâche de démarrage exécute encore la version {0} depuis {1}. Celle-ci est la {2}.'
+    staleGone  = 'La tâche de démarrage pointe vers {0}, et ce fichier n''existe plus.'
+    btnAutoUpd = 'Actualiser la copie'
+    logAutoUpd = 'Copie actualisée : {0} contient désormais la version {1}.'
     stShadowOk = 'cliché instantané présent'
     stRegOnly  = 'entrée de registre uniquement'
     stUnknown  = 'inconnu (droits d''administrateur requis)'
@@ -485,6 +585,9 @@ fr = @{
     unitDay    = 'jour'
     unitDays   = 'jours'
     unitMin    = 'minutes'
+    unitMin1   = 'minute'
+    unitMinShort = 'min'
+    unitHourShort = 'h'
 
     btnReset   = 'Tout réinitialiser'
     btnRefresh = 'Actualiser'
@@ -493,6 +596,12 @@ fr = @{
     btnSnapNow = 'Créer un instantané maintenant'
     snapHint   = 'Crée immédiatement un point de restauration, indépendamment de la planification. Les réglages ci-dessous restent inchangés.'
     tipSnapNow = 'Exécute PITRTask une fois, même pendant l''utilisation de la machine. Rien n''est écrit dans la configuration.'
+    chkAuto    = 'À chaque démarrage du système'
+    autoHint   = 'Windows demande de lui-même un point au démarrage, mais cette demande attend l''inactivité - et une machine qui vient de démarrer est tout sauf inactive. Ceci la force.'
+    tipAuto    = 'Enregistre une tâche planifiée qui crée un point de restauration le nombre de minutes choisi après chaque démarrage. S''exécute en tant que SYSTEM, sans ouverture de session.'
+    logAutoOn  = 'Instantané de démarrage enregistré : {0} minutes après le démarrage.'
+    logAutoOff = 'Instantané de démarrage supprimé.'
+    warnPath   = 'Ce fichier ne se trouve pas sur un disque local fixe. La tâche mémorise son chemin et pourrait ne pas l''atteindre au démarrage.'
     grpLog     = 'Journal'
 
     effective  = 'Actuellement appliqué'
@@ -521,6 +630,8 @@ fr = @{
     logIdleBad = 'AVERTISSEMENT : impossible de rétablir la condition d''inactivité !'
     logDone    = 'Terminé. Résultat'
     logNextRun = 'prochaine exécution'
+    logTook    = 'durée {0}'
+    logNoFinish= 'toujours en cours après {0} - le point se termine en arrière-plan.'
     logRemoved = 'supprimé'
     logNothing = 'Aucune valeur n''était définie.'
     logError   = 'Erreur'
@@ -587,6 +698,21 @@ es = @{
     colAge     = 'Antigüedad'
     colStatus  = 'Estado'
     colBuild   = 'Compilación'
+    colDur     = 'Duración'
+    histHint   = 'Windows no registra cuánto tardó una instantánea mientras el historial del Programador de tareas esté desactivado. Este registra todas las tareas programadas del equipo y solo cubre las ejecuciones a partir de su activación.'
+    btnHist    = 'Activar el historial'
+    askHist    = '¿Activar el historial del Programador de tareas? Es un ajuste de todo el sistema: a partir de entonces se registrará cada tarea programada de este equipo en un búfer circular de 10 MB. Los puntos de restauración existentes seguirán sin duración.'
+    askHistT   = 'Historial de tareas'
+    logHistOn  = 'Historial activado. La duración aparecerá a partir de la siguiente ejecución.'
+    logHistErr = 'No se pudo activar el historial de tareas.'
+    askCopy    = 'Este archivo está en un recurso compartido de red o en una unidad extraíble. La tarea se ejecuta como SYSTEM y accede a la red con la cuenta de equipo, no con la suya, por eso una instantánea de inicio desde un recurso compartido suele fallar aunque este se abra sin problemas.{0}{0}¿Copiar el archivo a {1} y registrar la tarea desde ahí?{0}{0}Sí: copiar y usar el archivo local. No: registrar de todos modos con la ruta actual. Cancelar: no registrar.'
+    askCopyT   = 'Instantánea de inicio'
+    logCopyOk  = 'Copiado a {0}: la tarea usa ese archivo.'
+    loading    = 'leyendo...'
+    staleOld   = 'La tarea de inicio sigue ejecutando la versión {0} desde {1}. Esta es la {2}.'
+    staleGone  = 'La tarea de inicio apunta a {0}, y ese archivo ya no existe.'
+    btnAutoUpd = 'Actualizar la copia'
+    logAutoUpd = 'Copia actualizada: en {0} está ahora la versión {1}.'
     stShadowOk = 'instantánea presente'
     stRegOnly  = 'solo entrada del registro'
     stUnknown  = 'desconocido (se requieren permisos de administrador)'
@@ -607,6 +733,9 @@ es = @{
     unitDay    = 'día'
     unitDays   = 'días'
     unitMin    = 'minutos'
+    unitMin1   = 'minuto'
+    unitMinShort = 'min'
+    unitHourShort = 'h'
 
     btnReset   = 'Restablecer todo'
     btnRefresh = 'Actualizar'
@@ -615,6 +744,12 @@ es = @{
     btnSnapNow = 'Crear instantánea ahora'
     snapHint   = 'Crea de inmediato un punto de restauración, al margen de la programación. Los ajustes de abajo quedan intactos.'
     tipSnapNow = 'Ejecuta PITRTask una vez, incluso mientras el equipo está en uso. No se escribe nada en la configuración.'
+    chkAuto    = 'En cada inicio del sistema'
+    autoHint   = 'Windows pide por sí mismo un punto al arrancar, pero esa petición espera a que el sistema esté inactivo, y un equipo recién arrancado no lo está. Esto la fuerza.'
+    tipAuto    = 'Registra una tarea programada que crea un punto de restauración los minutos elegidos después de cada inicio. Se ejecuta como SYSTEM, sin necesidad de iniciar sesión.'
+    logAutoOn  = 'Instantánea de inicio registrada: {0} minutos después del arranque.'
+    logAutoOff = 'Instantánea de inicio eliminada.'
+    warnPath   = 'Este archivo no está en una unidad local fija. La tarea guarda su ruta y puede no alcanzarla al arrancar.'
     grpLog     = 'Registro'
 
     effective  = 'Actualmente en vigor'
@@ -643,6 +778,8 @@ es = @{
     logIdleBad = 'ADVERTENCIA: no se pudo restaurar la condición de inactividad.'
     logDone    = 'Terminado. Resultado'
     logNextRun = 'próxima ejecución'
+    logTook    = 'duración {0}'
+    logNoFinish= 'sigue en marcha tras {0} - el punto se completa en segundo plano.'
     logRemoved = 'eliminado'
     logNothing = 'No había ningún valor establecido.'
     logError   = 'Error'
@@ -709,6 +846,21 @@ pt = @{
     colAge     = 'Idade'
     colStatus  = 'Status'
     colBuild   = 'Build'
+    colDur     = 'Duração'
+    histHint   = 'O Windows não registra quanto tempo um instantâneo levou enquanto o histórico do Agendador de Tarefas estiver desativado. Ele registra todas as tarefas agendadas do computador e cobre apenas as execuções a partir da ativação.'
+    btnHist    = 'Ativar o histórico'
+    askHist    = 'Ativar o histórico do Agendador de Tarefas? É uma configuração de todo o sistema: a partir daí cada tarefa agendada deste computador é registrada em um buffer circular de 10 MB. Os pontos de restauração existentes continuam sem duração.'
+    askHistT   = 'Histórico de tarefas'
+    logHistOn  = 'Histórico ativado. A duração aparece a partir da próxima execução.'
+    logHistErr = 'Não foi possível ativar o histórico de tarefas.'
+    askCopy    = 'Este arquivo está em um compartilhamento de rede ou em uma unidade removível. A tarefa é executada como SYSTEM e acessa a rede com a conta de computador, não com a sua, por isso um instantâneo de inicialização a partir de um compartilhamento costuma falhar mesmo que ele abra normalmente.{0}{0}Copiar o arquivo para {1} e registrar a tarefa a partir de lá?{0}{0}Sim: copiar e usar o arquivo local. Não: registrar mesmo assim com o caminho atual. Cancelar: não registrar.'
+    askCopyT   = 'Instantâneo de inicialização'
+    logCopyOk  = 'Copiado para {0} - a tarefa usa esse arquivo.'
+    loading    = 'lendo...'
+    staleOld   = 'A tarefa de inicialização ainda executa a versão {0} de {1}. Esta aqui é a {2}.'
+    staleGone  = 'A tarefa de inicialização aponta para {0}, e esse arquivo não existe mais.'
+    btnAutoUpd = 'Atualizar a cópia'
+    logAutoUpd = 'Cópia atualizada: em {0} está agora a versão {1}.'
     stShadowOk = 'cópia de sombra presente'
     stRegOnly  = 'apenas entrada no registro'
     stUnknown  = 'desconhecido (requer direitos de administrador)'
@@ -729,6 +881,9 @@ pt = @{
     unitDay    = 'dia'
     unitDays   = 'dias'
     unitMin    = 'minutos'
+    unitMin1   = 'minuto'
+    unitMinShort = 'min'
+    unitHourShort = 'h'
 
     btnReset   = 'Redefinir tudo'
     btnRefresh = 'Atualizar'
@@ -737,6 +892,12 @@ pt = @{
     btnSnapNow = 'Criar instantâneo agora'
     snapHint   = 'Cria imediatamente um ponto de restauração, independentemente do agendamento. As configurações abaixo permanecem intactas.'
     tipSnapNow = 'Executa a PITRTask uma vez, mesmo com o computador em uso. Nada é gravado na configuração.'
+    chkAuto    = 'A cada inicialização do sistema'
+    autoHint   = 'O Windows pede um ponto na inicialização por conta própria, mas esse pedido espera o sistema ficar ocioso - e um computador recém-iniciado não está. Isto o força.'
+    tipAuto    = 'Registra uma tarefa agendada que cria um ponto de restauração os minutos escolhidos após cada inicialização. É executada como SYSTEM, sem necessidade de logon.'
+    logAutoOn  = 'Instantâneo de inicialização registrado: {0} minutos após a inicialização.'
+    logAutoOff = 'Instantâneo de inicialização removido.'
+    warnPath   = 'Este arquivo não está em uma unidade local fixa. A tarefa guarda o caminho dele e pode não alcançá-lo na inicialização.'
     grpLog     = 'Registro'
 
     effective  = 'Atualmente em vigor'
@@ -765,6 +926,8 @@ pt = @{
     logIdleBad = 'AVISO: não foi possível restaurar a condição de ociosidade!'
     logDone    = 'Concluído. Resultado'
     logNextRun = 'próxima execução'
+    logTook    = 'duração {0}'
+    logNoFinish= 'ainda em execução após {0} - o ponto é concluído em segundo plano.'
     logRemoved = 'removido'
     logNothing = 'Nenhum valor estava definido.'
     logError   = 'Erro'
@@ -832,6 +995,21 @@ it = @{
     colAge     = 'Età'
     colStatus  = 'Stato'
     colBuild   = 'Build'
+    colDur     = 'Durata'
+    histHint   = 'Windows non registra quanto è durata un''istantanea finché la cronologia dell''Utilità di pianificazione è disattivata. Questa registra ogni attività pianificata del computer e copre solo le esecuzioni successive all''attivazione.'
+    btnHist    = 'Attivare la cronologia'
+    askHist    = 'Attivare la cronologia dell''Utilità di pianificazione? È un''impostazione valida per tutto il sistema: da quel momento ogni attività pianificata di questo computer viene registrata in un buffer circolare da 10 MB. I punti di ripristino esistenti restano senza durata.'
+    askHistT   = 'Cronologia delle attività'
+    logHistOn  = 'Cronologia attivata. La durata compare dalla prossima esecuzione.'
+    logHistErr = 'Non è stato possibile attivare la cronologia.'
+    askCopy    = 'Questo file si trova su una condivisione di rete o su un''unità rimovibile. L''attività viene eseguita come SYSTEM e raggiunge la rete con l''account del computer, non con il tuo, perciò un''istantanea all''avvio da una condivisione di solito non riesce anche se la condivisione si apre senza problemi.{0}{0}Copiare il file in {1} e registrare l''attività da lì?{0}{0}Sì: copiare e usare il file locale. No: registrare comunque con il percorso attuale. Annulla: non registrare.'
+    askCopyT   = 'Istantanea all''avvio'
+    logCopyOk  = 'Copiato in {0} - l''attività usa quel file.'
+    loading    = 'lettura...'
+    staleOld   = 'L''attività di avvio esegue ancora la versione {0} da {1}. Questa è la {2}.'
+    staleGone  = 'L''attività di avvio punta a {0}, e quel file non c''è più.'
+    btnAutoUpd = 'Aggiorna la copia'
+    logAutoUpd = 'Copia aggiornata: in {0} ora c''è la versione {1}.'
     stShadowOk = 'copia shadow presente'
     stRegOnly  = 'solo voce di registro'
     stUnknown  = 'sconosciuto (servono diritti di amministratore)'
@@ -852,6 +1030,9 @@ it = @{
     unitDay    = 'giorno'
     unitDays   = 'giorni'
     unitMin    = 'minuti'
+    unitMin1   = 'minuto'
+    unitMinShort = 'min'
+    unitHourShort = 'h'
 
     btnReset   = 'Reimposta tutto'
     btnRefresh = 'Aggiorna'
@@ -860,6 +1041,12 @@ it = @{
     btnSnapNow = 'Crea subito un''istantanea'
     snapHint   = 'Crea subito un punto di ripristino, indipendentemente dalla pianificazione. Le impostazioni qui sotto restano invariate.'
     tipSnapNow = 'Esegue PITRTask una volta, anche mentre il computer è in uso. Nella configurazione non viene scritto nulla.'
+    chkAuto    = 'A ogni avvio del sistema'
+    autoHint   = 'Windows chiede da solo un punto all''avvio, ma quella richiesta aspetta che il sistema sia inattivo - e un computer appena avviato non lo è. Questo la forza.'
+    tipAuto    = 'Registra un''attività pianificata che crea un punto di ripristino dopo i minuti scelti a ogni avvio. Viene eseguita come SYSTEM, senza bisogno di accedere.'
+    logAutoOn  = 'Istantanea all''avvio registrata: {0} minuti dopo l''avvio.'
+    logAutoOff = 'Istantanea all''avvio rimossa.'
+    warnPath   = 'Questo file non si trova su un''unità locale fissa. L''attività memorizza il suo percorso e potrebbe non raggiungerlo all''avvio.'
     grpLog     = 'Registro'
 
     effective  = 'Attualmente in vigore'
@@ -888,6 +1075,8 @@ it = @{
     logIdleBad = 'ATTENZIONE: non è stato possibile ripristinare la condizione di inattività!'
     logDone    = 'Fatto. Risultato'
     logNextRun = 'prossima esecuzione'
+    logTook    = 'durata {0}'
+    logNoFinish= 'ancora in corso dopo {0} - il punto viene completato in background.'
     logRemoved = 'rimosso'
     logNothing = 'Nessun valore era impostato.'
     logError   = 'Errore'
@@ -957,6 +1146,21 @@ pl = @{
     colAge     = 'Wiek'
     colStatus  = 'Stan'
     colBuild   = 'Kompilacja'
+    colDur     = 'Czas'
+    histHint   = 'Windows nie zapisuje, jak długo trwała migawka, dopóki historia Harmonogramu zadań jest wyłączona. Rejestruje ona każde zaplanowane zadanie na tym komputerze i obejmuje tylko uruchomienia od momentu włączenia.'
+    btnHist    = 'Włącz historię zadań'
+    askHist    = 'Włączyć historię Harmonogramu zadań? To ustawienie obejmuje cały system: od tej chwili każde zaplanowane zadanie na tym komputerze jest zapisywane w buforze cyklicznym o wielkości 10 MB. Istniejące punkty przywracania nadal pozostaną bez czasu trwania.'
+    askHistT   = 'Historia zadań'
+    logHistOn  = 'Historia zadań włączona. Czas pojawi się od następnego uruchomienia.'
+    logHistErr = 'Nie udało się włączyć historii zadań.'
+    askCopy    = 'Ten plik znajduje się w udziale sieciowym lub na nośniku wymiennym. Zadanie działa jako SYSTEM i sięga do sieci jako konto komputera, a nie jako Ty - dlatego migawka startowa z udziału zwykle się nie udaje, choć udział otwiera się bez problemu.{0}{0}Skopiować plik do {1} i zarejestrować zadanie stamtąd?{0}{0}Tak: skopiować i użyć pliku lokalnego. Nie: zarejestrować mimo to z bieżącą ścieżką. Anuluj: nie rejestrować.'
+    askCopyT   = 'Migawka startowa'
+    logCopyOk  = 'Skopiowano do {0} - zadanie używa tego pliku.'
+    loading    = 'odczyt...'
+    staleOld   = 'Zadanie startowe nadal uruchamia wersję {0} z {1}. Ta tutaj to {2}.'
+    staleGone  = 'Zadanie startowe wskazuje na {0}, a tego pliku już nie ma.'
+    btnAutoUpd = 'Odśwież kopię'
+    logAutoUpd = 'Kopia odświeżona: w {0} jest teraz wersja {1}.'
     stShadowOk = 'kopia w tle istnieje'
     stRegOnly  = 'tylko wpis w rejestrze'
     stUnknown  = 'nieznany (wymagane uprawnienia administratora)'
@@ -977,6 +1181,9 @@ pl = @{
     unitDay    = 'dzień'
     unitDays   = 'dni'
     unitMin    = 'min'
+    unitMin1   = 'min'
+    unitMinShort = 'min'
+    unitHourShort = 'godz.'
 
     btnReset   = 'Resetuj wszystko'
     btnRefresh = 'Odśwież'
@@ -985,6 +1192,12 @@ pl = @{
     btnSnapNow = 'Utwórz migawkę teraz'
     snapHint   = 'Tworzy punkt przywracania od razu, niezależnie od harmonogramu. Ustawienia poniżej pozostają bez zmian.'
     tipSnapNow = 'Uruchamia PITRTask jeden raz, także wtedy, gdy komputer jest używany. W konfiguracji nic nie zostaje zapisane.'
+    chkAuto    = 'Przy każdym uruchomieniu systemu'
+    autoHint   = 'Windows sam prosi o punkt przy starcie, ale to żądanie czeka na bezczynność systemu - a dopiero co uruchomiony komputer bezczynny nie jest. To go wymusza.'
+    tipAuto    = 'Rejestruje zaplanowane zadanie, które tworzy punkt przywracania po wybranej liczbie minut od każdego uruchomienia. Działa jako SYSTEM, bez potrzeby logowania.'
+    logAutoOn  = 'Migawka startowa zarejestrowana: {0} minut po uruchomieniu.'
+    logAutoOff = 'Migawka startowa usunięta.'
+    warnPath   = 'Ten plik nie znajduje się na stałym dysku lokalnym. Zadanie zapamiętuje jego ścieżkę i może jej nie osiągnąć przy starcie.'
     grpLog     = 'Dziennik'
 
     effective  = 'Obecnie obowiązuje'
@@ -1013,6 +1226,8 @@ pl = @{
     logIdleBad = 'UWAGA: nie udało się przywrócić warunku bezczynności!'
     logDone    = 'Gotowe. Wynik'
     logNextRun = 'następne uruchomienie'
+    logTook    = 'czas {0}'
+    logNoFinish= 'nadal trwa po {0} - punkt jest kończony w tle.'
     logRemoved = 'usunięto'
     logNothing = 'Żadne wartości nie były ustawione.'
     logError   = 'Błąd'
@@ -1110,6 +1325,17 @@ function Format-Duration {
 # mit der des Nutzers: "$datum" ergibt 08/27/2026 auch auf einem deutschen System. Jede
 # Zeitangabe geht deshalb ausdruecklich ueber ToString('g') - das ist das kurze Datums- und
 # Zeitformat der Region, dasselbe wie in der Punkteliste.
+# Sekunden mit einer Nachkommastelle, ab einer Minute als m:ss. Die Einheiten bleiben
+# als "s" und "min" stehen: Beides ist in allen sieben Sprachen dieselbe Abkuerzung,
+# die Zahl selbst folgt ueber ToString der Region des Nutzers.
+function Format-Elapsed {
+    param([double]$Seconds)
+    if ($Seconds -lt 60) { return $Seconds.ToString('0.0') + ' s' }
+    # Floor und nicht [int]: Die Umwandlung nach [int] RUNDET in PowerShell, aus 95,4
+    # Sekunden wuerden damit 2:35 statt 1:35 - und aus 119,7 sogar 1:60.
+    return ('{0}:{1:00} min' -f [math]::Floor($Seconds / 60), [math]::Floor($Seconds % 60))
+}
+
 function Format-Stamp {
     param($Value)
     if ($null -eq $Value) { return '-' }
@@ -1118,13 +1344,79 @@ function Format-Stamp {
 
 function Format-Age {
     param([double]$Hours)
-    if ($Hours -lt 48) { return ('{0:N1} h' -f $Hours) }
+    # Unter einer Stunde in Minuten: "0,1 h" sagt niemandem etwas, "8 min" schon.
+    # Ganzzahlig gerundet, weil Sekundenbruchteile beim Alter keine Rolle spielen.
+    if ($Hours -lt 1) { return ('{0:N0} {1}' -f ($Hours * 60), (T 'unitMinShort')) }
+    if ($Hours -lt 48) { return ('{0:N1} {1}' -f $Hours, (T 'unitHourShort')) }
     return ('{0:N1} {1}' -f ($Hours / 24), (T 'unitDays'))
 }
 
 # Restore points: timestamps from the registry (TimeUTC = 8-byte FILETIME),
 # reconciled against the VSS shadow copies that actually exist. A registry entry
 # without a matching shadow copy is a leftover and cannot be restored from.
+# Windows haelt die Dauer einer Schattenkopie nirgends fest - weder Win32_ShadowCopy
+# noch das Momentaufnahme-Protokoll kennen eine Zeitspanne, dessen Ereignispaare
+# beschreiben das Online- und Offlineschalten von Volumes. Die einzige Quelle ist der
+# Aufgabenverlauf: Ereignis 100 (gestartet) und 102 (abgeschlossen) tragen dieselbe
+# Instanz-Kennung, die Differenz ist die Laufzeit von PITRTask.
+#
+# Der Verlauf ist bei Windows ab Werk abgeschaltet. Dann gibt es hier $null, die Spalte
+# bleibt leer und die Oberflaeche bietet das Einschalten an - heimlich wird an einer
+# systemweiten Protokolleinstellung nichts gedreht.
+function Get-TaskRuns {
+    $log = 'Microsoft-Windows-TaskScheduler/Operational'
+    # $TaskPath endet bereits auf einen Backslash - schlichtes Aneinanderhaengen ist
+    # hier eindeutiger als jede Trimmerei mit maskierten Zeichen.
+    $full = $TaskPath + $TaskName
+    try {
+        $l = Get-WinEvent -ListLog $log -ErrorAction Stop
+        if (-not $l.IsEnabled) { return $null }
+    } catch { return $null }
+
+    # Gefiltert wird im Protokoll und nicht hinterher in PowerShell. Das Zerlegen der
+    # Ereignisse nach XML kostet rund eine Millisekunde pro Stueck: Bei 600 Ereignissen
+    # aus allen Aufgaben des Rechners waren das 600 ms Startverzoegerung, bei den sechs,
+    # die PITRTask betreffen, sind es 7 ms. Der Aufwand bleibt damit konstant, egal wie
+    # voll das Protokoll ist - und es fuellt sich mit jeder Aufgabe des Systems.
+    $xp = "*[System[(EventID=100 or EventID=102)]] and *[EventData[Data[@Name='TaskName']='$full']]"
+    try {
+        $ev = Get-WinEvent -LogName $log -FilterXPath $xp -MaxEvents 200 -ErrorAction Stop
+    } catch { return @() }          # eingeschaltet, aber noch nichts drin
+
+    # In einfachen Anfuehrungszeichen ist '\' buchstaeblich ZWEI Backslashes - der
+    # Aufgabenname haette damit nie gepasst. Join-Path waere hier falsch (kein Dateipfad).
+    $runs = @{}
+    foreach ($e in $ev) {
+        try {
+            # Ueber die benannten Felder und nicht ueber Properties[0..n]: Die
+            # Reihenfolge unterscheidet sich zwischen den beiden Ereignissen.
+            $d = @{}
+            foreach ($n in ([xml]$e.ToXml()).Event.EventData.Data) { $d[$n.Name] = $n.'#text' }
+            $id = [string]$d['InstanceId']
+            if ([string]::IsNullOrEmpty($id)) { continue }
+            if (-not $runs.ContainsKey($id)) { $runs[$id] = @{ Start = $null; End = $null } }
+            if ($e.Id -eq 100) { $runs[$id].Start = $e.TimeCreated } else { $runs[$id].End = $e.TimeCreated }
+        } catch { }
+    }
+
+    $out = New-Object System.Collections.Generic.List[object]
+    foreach ($r in $runs.Values) {
+        if ($r.Start -and $r.End -and $r.End -ge $r.Start) {
+            $out.Add([pscustomobject]@{
+                Start   = $r.Start
+                End     = $r.End
+                Seconds = ($r.End - $r.Start).TotalSeconds
+            })
+        }
+    }
+    # ToArray() und nicht @($out): Windows PowerShell 5.1 wirft beim Umwandeln einer
+    # generischen Liste in ein Array mit @(...) eine ArgumentException, sobald ein
+    # PSCustomObject darin liegt ("Die Argumenttypen stimmen nicht ueberein"). An der
+    # anderen Liste in dieser Datei faellt es nicht auf, weil sie durch Sort-Object
+    # laeuft - eine Pipeline umgeht die Umwandlung.
+    return $out.ToArray()
+}
+
 function Get-RestorePoints {
     # Without administrator rights the VSS query fails. The status must then stay
     # open instead of falsely claiming "registry entry only".
@@ -1134,6 +1426,13 @@ function Get-RestorePoints {
         foreach ($c in (Get-CimInstance Win32_ShadowCopy -ErrorAction Stop)) { $vss["$($c.ID)"] = $true }
         $vssOk = $true
     } catch { }
+
+    # Ein Punkt gehoert zu dem Lauf, in dessen Zeitfenster sein Zeitstempel faellt.
+    # Eine halbe Minute Spielraum nach beiden Seiten, weil der Eintrag in der Registry
+    # und das Ereignis nicht auf die Sekunde zusammenfallen. Die Laeufe liegen Stunden
+    # auseinander, eine Verwechslung ist damit ausgeschlossen.
+    $runs = Get-TaskRuns
+    $script:HistoryOff = ($null -eq $runs)
 
     $now = Get-Date
     $list = New-Object System.Collections.Generic.List[object]
@@ -1157,6 +1456,12 @@ function Get-RestorePoints {
                         elseif ($vss.ContainsKey("$($p.Id)")) { T 'stShadowOk' }
                         else { T 'stRegOnly' }
             Version   = "$($p.Build).$($p.Revision)"
+            Dauer     = if ($dt -and $runs) {
+                            $hit = $runs | Where-Object {
+                                $dt -ge $_.Start.AddSeconds(-30) -and $dt -le $_.End.AddSeconds(30)
+                            } | Select-Object -First 1
+                            if ($hit) { Format-Elapsed $hit.Seconds } else { '-' }
+                        } else { '-' }
         })
     }
     return @($list | Sort-Object Sortier -Descending)
@@ -1214,16 +1519,25 @@ function Get-WinReState {
         # Datei ist relativ, die Partition steckt in id (Datentraeger) und offset (Versatz
         # in Byte) - danach wird gesucht, nicht im Pfad. Klappt es nicht, bleiben die
         # Zahlen einfach weg.
+        # Direkt ueber CIM und nicht ueber Get-Partition/Get-Volume: Der erste Aufruf
+        # dieser Cmdlets laedt das Storage-Modul, und das kostete beim Programmstart
+        # allein 1,7 Sekunden. Dieselbe Auskunft ueber denselben CIM-Namensraum
+        # braucht 200 Millisekunden, weil kein Modul dafuer geladen werden muss.
         $size = $null
         $free = $null
         try {
             $disk = [int]$cfg.WinreLocation.id
             $off  = [long]$cfg.WinreLocation.offset
-            $part = Get-Partition -DiskNumber $disk -ErrorAction Stop |
-                    Where-Object { $_.Offset -eq $off } | Select-Object -First 1
+            $part = Get-CimInstance -Namespace root/Microsoft/Windows/Storage `
+                                    -ClassName MSFT_Partition -ErrorAction Stop |
+                    Where-Object { $_.DiskNumber -eq $disk -and $_.Offset -eq $off } |
+                    Select-Object -First 1
             if ($part) {
                 $size = $part.Size
-                try { $free = ($part | Get-Volume -ErrorAction Stop).SizeRemaining } catch { }
+                try {
+                    $vol = $part | Get-CimAssociatedInstance -ResultClassName MSFT_Volume -ErrorAction Stop
+                    if ($vol) { $free = $vol.SizeRemaining }
+                } catch { }
             }
         } catch { }
         return [pscustomobject]@{ Enabled = [bool]$on; Path = $path; Size = $size; Free = $free }
@@ -1325,6 +1639,37 @@ $xaml = @'
       </Grid>
     </Border>
 
+    <!-- Der Startschnappschuss gehoert direkt unter den Knopf: Es ist dieselbe Aktion,
+         nur zeitversetzt. Erklaerung rechts daneben, damit die Zeile flach bleibt. -->
+    <Grid Margin="2,0,0,10">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <CheckBox x:Name="ChkAuto" Grid.Column="0" VerticalAlignment="Center" FontSize="12"/>
+      <ComboBox x:Name="CmbAutoDelay" Grid.Column="1" Width="112" Height="22"
+                Margin="10,0,0,0" FontSize="12" VerticalAlignment="Center"/>
+      <TextBlock x:Name="TxtAutoHint" Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center"
+                 TextWrapping="Wrap" Foreground="#777" FontSize="11"/>
+    </Grid>
+
+    <!-- Nur sichtbar, wenn die Startaufgabe auf eine andere Fassung zeigt als die
+         gerade laufende. Gelb wie der Unoffiziell-Hinweis: eine Warnung, kein Fehler. -->
+    <Border x:Name="BoxStale" BorderBrush="#D9B36A" BorderThickness="1" Background="#FFF8E7"
+            Padding="8,6" Margin="0,0,0,10" Visibility="Collapsed">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock x:Name="TxtStale" Grid.Column="0" TextWrapping="Wrap" VerticalAlignment="Center"
+                   Foreground="#6B5210" FontSize="12"/>
+        <Button x:Name="BtnAutoUpd" Grid.Column="1" Height="24" Padding="12,0" Margin="12,0,0,0"
+                FontSize="12"/>
+      </Grid>
+    </Border>
+
     <!-- Einleitung und Hinweis stehen bewusst ausserhalb des Rasters: in der linken Spalte
          brachen sie neben den Sprachknoepfen frueh um und liessen die Flaeche darunter leer.
          Ueber die volle Breite brauchen sie zugleich weniger Zeilen. -->
@@ -1405,11 +1750,23 @@ $xaml = @'
             <GridView>
               <GridViewColumn Width="150" DisplayMemberBinding="{Binding Zeitpunkt}"/>
               <GridViewColumn Width="90"  DisplayMemberBinding="{Binding Alter}"/>
-              <GridViewColumn Width="210" DisplayMemberBinding="{Binding Status}"/>
+              <GridViewColumn Width="90"  DisplayMemberBinding="{Binding Dauer}"/>
+              <GridViewColumn Width="190" DisplayMemberBinding="{Binding Status}"/>
               <GridViewColumn Width="110" DisplayMemberBinding="{Binding Version}"/>
             </GridView>
           </ListView.View>
         </ListView>
+        <!-- Nur sichtbar, solange der Aufgabenverlauf aus ist: Ohne ihn bleibt die
+             Spalte "Dauer" leer, und der Knopf ist der einzige Weg dorthin. -->
+        <Grid x:Name="RowHist" Margin="0,6,0,0" Visibility="Collapsed">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <TextBlock x:Name="TxtHistHint" Grid.Column="0" Foreground="#777" FontSize="11"
+                     TextWrapping="Wrap" VerticalAlignment="Center" Margin="2,0,10,0"/>
+          <Button x:Name="BtnHist" Grid.Column="1" Height="22" Padding="10,0" FontSize="11"/>
+        </Grid>
         <Border BorderBrush="#C9D6E4" BorderThickness="1" Background="#EEF4FA"
                 Padding="8,5" Margin="0,8,0,0">
           <TextBlock x:Name="TxtVolumeNote" TextWrapping="Wrap" Foreground="#2C4A66" FontSize="12"/>
@@ -1486,11 +1843,13 @@ foreach ($n in 'TxtHead','TxtSub','TxtIntro','TxtUnofficial',
                'TxtUpdate','LnkUpdate','RunUpdate',
                'BtnLangEN','BtnLangDE','BtnLangFR','BtnLangES','BtnLangPT',
                'BtnLangIT','BtnLangPL',
-               'BtnSnapNow','TxtSnapHint',
+               'BtnSnapNow','TxtSnapHint','ChkAuto','CmbAutoDelay','TxtAutoHint',
+               'BoxStale','TxtStale','BtnAutoUpd',
                'GrpState','CapEdition','TxtEdition','CapLast','TxtLast','CapNext','TxtNext',
                'CapWinRE','TxtWinRE','BtnWinRE','BoxWinRE','TxtWinReNote','BtnCopy','TxtCopyHint',
                'CapTaskState','TxtTaskState','CapDelta','TxtDelta','TxtIdleNote',
                'GrpPoints','TxtPoints','TxtOldest','TxtStorage','TxtStoreNote','LstPoints',
+               'RowHist','TxtHistHint','BtnHist',
                'TxtVolumeNote',
                'GrpSet','CapActive','CmbActive','LblActive','CapFreq','CmbFreq','LblFreq',
                'CapReten','CmbReten','LblReten','CapSize','CmbSize','LblSize',
@@ -1545,12 +1904,16 @@ function Show-UpdateNotice {
 function Write-Log {
     param([string]$Text)
     $stamp = (Get-Date).ToString('HH:mm:ss')
+    # Im kopflosen Betrieb gibt es kein Fenster, an das man schreiben koennte - dann
+    # in die Konsole. Dieselbe Funktion, damit Invoke-TaskNow nichts davon wissen muss.
+    if ($script:Headless) { Write-Host "[$stamp] $Text"; return }
     $ctl.TxtLog.AppendText("[$stamp] $Text`r`n")
     $ctl.TxtLog.ScrollToEnd()
 }
 
 # Keeps the window repainting while work is in progress.
 function Update-Ui {
+    if ($script:Headless) { return }
     $window.Dispatcher.Invoke([action] {}, [System.Windows.Threading.DispatcherPriority]::Background) | Out-Null
 }
 
@@ -1633,6 +1996,12 @@ function Apply-Language {
     $ctl.CapWinRE.Text       = T 'capWinRE'
     $ctl.TxtWinReNote.Text   = T 'noteWinRE'
     $ctl.TxtSnapHint.Text    = T 'snapHint'
+    $ctl.ChkAuto.Content     = T 'chkAuto'
+    $ctl.ChkAuto.ToolTip     = T 'tipAuto'
+    $ctl.TxtAutoHint.Text    = T 'autoHint'
+    $ctl.CmbAutoDelay.ToolTip = T 'tipAuto'
+    $ctl.BtnAutoUpd.Content   = T 'btnAutoUpd'
+    Build-DelayChoices
 
     # The notice may already be on screen when the language is switched.
     if ($script:UpdateVersion) {
@@ -1669,8 +2038,11 @@ function Apply-Language {
     $cols = $ctl.LstPoints.View.Columns
     $cols[0].Header = T 'colTime'
     $cols[1].Header = T 'colAge'
-    $cols[2].Header = T 'colStatus'
-    $cols[3].Header = T 'colBuild'
+    $cols[2].Header = T 'colDur'
+    $cols[3].Header = T 'colStatus'
+    $cols[4].Header = T 'colBuild'
+    $ctl.TxtHistHint.Text = T 'histHint'
+    $ctl.BtnHist.Content  = T 'btnHist'
 
     $ctl.GrpSet.Header  = T 'grpSet'
     $ctl.CapActive.Text = T 'capActive'
@@ -1713,6 +2085,7 @@ function Update-View {
     # --- Restore points ---
     $punkte = @(Get-RestorePoints)
     $ctl.LstPoints.ItemsSource = $punkte
+    $ctl.RowHist.Visibility = if ($script:HistoryOff) { 'Visible' } else { 'Collapsed' }
     $ctl.TxtPoints.Text = "$(T 'lblCount'): $($punkte.Count)"
 
     # The oldest point shows directly whether the configured retention takes effect.
@@ -1779,6 +2152,7 @@ function Update-View {
         }
 
         Update-WinReRow
+        Update-AutoRow
 
         # The scheduled interval is the repetition of the time trigger. Deriving it from
         # "next run minus last run" was wrong: when a run is skipped because the machine is
@@ -1843,6 +2217,39 @@ function Update-View {
                           else { "${eff}: $([math]::Round($s.Value/1024,1)) GB — ${src}: $(Get-LevelLabel $s.Level)" }
 }
 
+# Die Auswahl wird bei jedem Sprachwechsel neu aufgebaut, deshalb merkt sie sich den
+# eingestellten Wert und setzt ihn danach wieder.
+function Build-DelayChoices {
+    $keep = Get-SelectedTag $ctl.CmbAutoDelay
+    if ($null -eq $keep) { $keep = 5 }
+    $ctl.CmbAutoDelay.Items.Clear()
+    foreach ($m in 1, 2, 5, 10, 15, 30) {
+        $u = if ($m -eq 1) { T 'unitMin1' } else { T 'unitMin' }
+        Add-Choice $ctl.CmbAutoDelay "$m $u" $m
+    }
+    Select-ByTag $ctl.CmbAutoDelay $keep
+}
+
+# Setzt Haken und Auswahl auf den tatsaechlichen Zustand der Aufgabe, ohne dabei das
+# Ereignis auszuloesen - sonst wuerde jedes Aktualisieren die Aufgabe neu schreiben.
+function Update-AutoRow {
+    $a = Get-AutoStart
+    $script:AutoQuiet = $true
+    try {
+        $ctl.ChkAuto.IsChecked = ($null -ne $a)
+        if ($null -ne $a) { Select-ByTag $ctl.CmbAutoDelay $a.Delay }
+    } finally { $script:AutoQuiet = $false }
+
+    $s = Get-AutoStartState
+    if ($null -ne $s -and $s.Stale) {
+        $ctl.TxtStale.Text = if ($s.Gone) { (T 'staleGone') -f $s.Path }
+                             else { (T 'staleOld') -f $s.Version, $s.Path, $Version }
+        $ctl.BoxStale.Visibility = 'Visible'
+    } else {
+        $ctl.BoxStale.Visibility = 'Collapsed'
+    }
+}
+
 function Update-WinReRow {
     $re = Get-WinReState
     if ($null -eq $re) {
@@ -1900,6 +2307,130 @@ function Get-StateReport {
     return $out.ToString()
 }
 
+# Windows legt beim Start von sich aus einen Punkt an - PITRTask hat einen
+# Boot-Trigger mit 30 Minuten Verzoegerung. Er verpufft nur, weil RunOnlyIfIdle gilt
+# und ein frisch gestarteter Rechner nicht im Leerlauf ist. Diese Aufgabe hier setzt
+# nicht noch einen Trigger obendrauf, sondern erzwingt den Lauf so, wie es der Knopf
+# im Fenster tut: Bedingung kurz aufheben, starten, zuruecksetzen.
+#
+# Die Windows-Aufgabe selbst bleibt unangetastet. Wer dort RunOnlyIfIdle dauerhaft
+# abschaltet, laesst Schattenkopien mitten in der Arbeit anlaufen - und beim naechsten
+# Funktionsupdate steht der Wert ohnehin wieder auf Vorgabe.
+$AutoTaskPath = '\pitr-config\'
+$AutoTaskName = 'Startup snapshot'
+
+function Get-AutoStart {
+    try {
+        $t = Get-ScheduledTask -TaskPath $AutoTaskPath -TaskName $AutoTaskName -ErrorAction Stop
+        $d = 5
+        foreach ($tr in $t.Triggers) {
+            if ($tr.Delay) {
+                try { $d = [int][System.Xml.XmlConvert]::ToTimeSpan([string]$tr.Delay).TotalMinutes } catch { }
+            }
+        }
+        return [pscustomobject]@{ Enabled = $true; Delay = $d; Action = $t.Actions[0].Arguments }
+    } catch { }
+    return $null
+}
+
+function Set-AutoStart {
+    param([int]$DelayMinutes = 5, [string]$SelfPath)
+    $self = if ($SelfPath) { $SelfPath } else { $env:PITR_SELF }
+    if (-not $self) { throw 'PITR_SELF is not set' }
+    $act = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument ('/c "' + $self + '" snapshot')
+    $trg = New-ScheduledTaskTrigger -AtStartup
+    $trg.Delay = 'PT{0}M' -f $DelayMinutes
+    $prn = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+    # StartWhenAvailable holt einen verpassten Start nach; ExecutionTimeLimit verhindert,
+    # dass eine haengende Schattenkopie die Aufgabe dauerhaft blockiert.
+    $set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+                                        -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
+    Register-ScheduledTask -TaskPath $AutoTaskPath -TaskName $AutoTaskName -Action $act `
+                           -Trigger $trg -Principal $prn -Settings $set -Force | Out-Null
+}
+
+# Die Aufgabe laeuft als SYSTEM. SYSTEM erreicht eine Netzwerkfreigabe als Computerkonto
+# und nicht als der angemeldete Mensch - deshalb scheitert ein Startschnappschuss von
+# einer Freigabe auch dann, wenn sie sich im Explorer anstandslos oeffnet. Eine lokale
+# Kopie loest das; ProgramData, weil SYSTEM dort schreiben und lesen darf.
+$LocalCopyDir = Join-Path $env:ProgramData 'pitr-config'
+
+# Die Versionszeile steht im Kopf des PowerShell-Teils, also weit innerhalb der ersten
+# 200 Zeilen. Mehr zu lesen waere Verschwendung - die Datei ist 160 KB gross.
+function Get-FileVersion {
+    param([string]$Path)
+    try {
+        foreach ($l in (Get-Content -LiteralPath $Path -TotalCount 200 -ErrorAction Stop)) {
+            if ($l -match "^\`$Version\s*=\s*'([^']+)'") { return $Matches[1] }
+        }
+    } catch { }
+    return $null
+}
+
+# Die Aufgabe merkt sich einen festen Pfad. Wird spaeter eine neuere Fassung von der
+# Freigabe gestartet, laeuft beim Systemstart weiterhin die alte Kopie - ohne dass es
+# jemandem auffiele. Deshalb wird beides verglichen.
+function Get-AutoStartState {
+    $a = Get-AutoStart
+    if ($null -eq $a) { return $null }
+
+    $path = $null
+    if ($a.Action -match '"([^"]+)"') { $path = $Matches[1] }
+    if (-not $path) { return $null }
+
+    $same = $false
+    try { $same = ([IO.Path]::GetFullPath($path) -ieq [IO.Path]::GetFullPath($env:PITR_SELF)) } catch { }
+    if ($same) { return [pscustomobject]@{ Path = $path; Stale = $false; Gone = $false; Version = $Version } }
+
+    if (-not (Test-Path -LiteralPath $path)) {
+        return [pscustomobject]@{ Path = $path; Stale = $true; Gone = $true; Version = $null }
+    }
+
+    $v = Get-FileVersion $path
+    # Gleiche Nummer, anderer Inhalt: kommt bei Zwischenstaenden vor, die noch keine
+    # eigene Version tragen. Dann entscheidet der Vergleich der Pruefsummen.
+    $stale = $false
+    if ($v -ne $Version) { $stale = $true }
+    else {
+        try {
+            $h1 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+            $h2 = (Get-FileHash -LiteralPath $env:PITR_SELF -Algorithm SHA256).Hash
+            $stale = ($h1 -ne $h2)
+        } catch { }
+    }
+    return [pscustomobject]@{ Path = $path; Stale = $stale; Gone = $false; Version = $v }
+}
+
+function Copy-SelfLocal {
+    if (-not (Test-Path -LiteralPath $LocalCopyDir)) {
+        New-Item -ItemType Directory -Path $LocalCopyDir -Force | Out-Null
+    }
+    $dest = Join-Path $LocalCopyDir 'pitr-config.cmd'
+    Copy-Item -LiteralPath $env:PITR_SELF -Destination $dest -Force
+    return $dest
+}
+
+function Remove-AutoStart {
+    try {
+        Unregister-ScheduledTask -TaskPath $AutoTaskPath -TaskName $AutoTaskName -Confirm:$false -ErrorAction Stop
+        return $true
+    } catch { }
+    return $false
+}
+
+# Eine Aufgabe merkt sich den Pfad der Datei. Liegt sie auf einer Freigabe oder einem
+# Wechseldatentraeger, ist der zum Startzeitpunkt womoeglich noch nicht da.
+function Test-SelfPathLocal {
+    $self = $env:PITR_SELF
+    if (-not $self) { return $false }
+    if ($self.StartsWith('\\')) { return $false }
+    try {
+        $d = [IO.DriveInfo]::new(([IO.Path]::GetPathRoot($self)))
+        return ($d.DriveType -eq 'Fixed')
+    } catch { }
+    return $false
+}
+
 function Save-Settings {
     $map = @(
         @{ Name = 'Active';           Combo = $ctl.CmbActive; Text = (T 'capActive') }
@@ -1930,15 +2461,25 @@ function Invoke-TaskNow {
         Write-Log (T 'logIdleOff')
         Update-Ui
 
+        # Gemessen wird die Laufzeit der Aufgabe: vom Start bis sie wieder auf "Ready"
+        # steht. Das ist die Zeit, die Windows fuer die Schattenkopie braucht - die
+        # Aufloesung betraegt die 1,5 Sekunden der Warteschleife, mehr braucht es nicht.
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
         Start-ScheduledTask -TaskPath $TaskPath -TaskName $TaskName
         Write-Log (T 'logStarted')
         Update-Ui
 
+        $finished = $false
         for ($i = 0; $i -lt 60; $i++) {
             Start-Sleep -Milliseconds 1500
             Update-Ui
-            if ((Get-ScheduledTask -TaskPath $TaskPath -TaskName $TaskName).State -eq 'Ready') { break }
+            if ((Get-ScheduledTask -TaskPath $TaskPath -TaskName $TaskName).State -eq 'Ready') {
+                $finished = $true
+                break
+            }
         }
+        $sw.Stop()
+        $took = Format-Elapsed $sw.Elapsed.TotalSeconds
 
         $t2 = Get-ScheduledTask -TaskPath $TaskPath -TaskName $TaskName
         $t2.Settings.RunOnlyIfIdle = $orig
@@ -1947,7 +2488,13 @@ function Invoke-TaskNow {
         Write-Log (T 'logIdleOn')
 
         $info = Get-ScheduledTaskInfo -TaskPath $TaskPath -TaskName $TaskName
-        Write-Log "$(T 'logDone'): $($info.LastTaskResult), $(T 'logNextRun'): $(Format-Stamp $info.NextRunTime)"
+        if ($finished) {
+            Write-Log "$(T 'logDone'): $($info.LastTaskResult), $((T 'logTook') -f $took), $(T 'logNextRun'): $(Format-Stamp $info.NextRunTime)"
+        } else {
+            # Die Schleife ist ausgelaufen, nicht die Aufgabe. Eine Dauer zu melden waere
+            # hier falsch - sie waere die Wartezeit und nicht die des Schnappschusses.
+            Write-Log ((T 'logNoFinish') -f $took)
+        }
     } finally {
         if (-not $restored) {
             try {
@@ -1964,7 +2511,8 @@ function Invoke-TaskNow {
 
 function Set-Busy {
     param([bool]$On)
-    $buttons = @('BtnSnapNow','BtnReset','BtnRefresh','BtnApply','BtnApplyNow','BtnWinRE','BtnCopy') +
+    $buttons = @('BtnSnapNow','BtnReset','BtnRefresh','BtnApply','BtnApplyNow','BtnWinRE','BtnCopy','BtnHist',
+                 'ChkAuto','CmbAutoDelay','BtnAutoUpd') +
                @($LangCodes | ForEach-Object { 'BtnLang' + $_.ToUpper() })
     foreach ($b in $buttons) { $ctl[$b].IsEnabled = -not $On }
     $window.Cursor = if ($On) { [System.Windows.Input.Cursors]::Wait } else { $null }
@@ -2034,6 +2582,80 @@ $ctl.BtnApplyNow.Add_Click({
     finally { Set-Busy $false }
 })
 
+function Apply-AutoStart {
+    if ($script:AutoQuiet) { return }
+    Set-Busy $true
+    try {
+        if ($ctl.ChkAuto.IsChecked) {
+            $d = Get-SelectedTag $ctl.CmbAutoDelay
+            if ($null -eq $d) { $d = 5 }
+            $path = $env:PITR_SELF
+            if (-not (Test-SelfPathLocal)) {
+                $nl = [Environment]::NewLine
+                $answer = [System.Windows.MessageBox]::Show(
+                    ((T 'askCopy') -f $nl, $LocalCopyDir), (T 'askCopyT'),
+                    [System.Windows.MessageBoxButton]::YesNoCancel,
+                    [System.Windows.MessageBoxImage]::Warning)
+                if ($answer -eq [System.Windows.MessageBoxResult]::Cancel) {
+                    $script:AutoQuiet = $true
+                    try { $ctl.ChkAuto.IsChecked = $false } finally { $script:AutoQuiet = $false }
+                    return
+                }
+                if ($answer -eq [System.Windows.MessageBoxResult]::Yes) {
+                    $path = Copy-SelfLocal
+                    Write-Log ((T 'logCopyOk') -f $path)
+                } else {
+                    Write-Log (T 'warnPath')
+                }
+            }
+            Set-AutoStart -DelayMinutes $d -SelfPath $path
+            Write-Log ((T 'logAutoOn') -f $d)
+        } else {
+            if (Remove-AutoStart) { Write-Log (T 'logAutoOff') }
+        }
+    }
+    catch { Write-Log "$(T 'logError'): $($_.Exception.Message)" }
+    finally { Set-Busy $false }
+}
+
+$ctl.ChkAuto.Add_Click({ Apply-AutoStart })
+
+# Kopie erneuern und die Aufgabe darauf neu ausrichten - mit derselben Verzoegerung,
+# die dort schon eingestellt war.
+$ctl.BtnAutoUpd.Add_Click({
+    Set-Busy $true
+    try {
+        $a = Get-AutoStart
+        $d = if ($a) { $a.Delay } else { 5 }
+        $path = Copy-SelfLocal
+        Set-AutoStart -DelayMinutes $d -SelfPath $path
+        Write-Log ((T 'logAutoUpd') -f $path, $Version)
+        Update-View
+    }
+    catch { Write-Log "$(T 'logError'): $($_.Exception.Message)" }
+    finally { Set-Busy $false }
+})
+$ctl.CmbAutoDelay.Add_SelectionChanged({ if ($ctl.ChkAuto.IsChecked) { Apply-AutoStart } })
+
+$ctl.BtnHist.Add_Click({
+    $answer = [System.Windows.MessageBox]::Show((T 'askHist'), (T 'askHistT'),
+        [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    if ($answer -ne [System.Windows.MessageBoxResult]::Yes) { return }
+    Set-Busy $true
+    try {
+        # wevtutil statt einer Registry-Aenderung: Der Aufgabenplaner liest den Zustand
+        # ueber die Protokollkonfiguration, ein direkter Registry-Eingriff wirkt erst
+        # nach einem Neustart des Dienstes.
+        $p = Start-Process -FilePath 'wevtutil.exe' `
+                           -ArgumentList 'sl', 'Microsoft-Windows-TaskScheduler/Operational', '/e:true' `
+                           -Wait -PassThru -WindowStyle Hidden
+        if ($p.ExitCode -eq 0) { Write-Log (T 'logHistOn') } else { Write-Log (T 'logHistErr') }
+        Update-View
+    }
+    catch { Write-Log "$(T 'logError'): $($_.Exception.Message)" }
+    finally { Set-Busy $false }
+})
+
 $ctl.BtnCopy.Add_Click({
     try {
         Set-Clipboard -Value (Get-StateReport)
@@ -2073,7 +2695,13 @@ $ctl.BtnReset.Add_Click({
 
 # ---------------------------------------------------------------------- Start --
 Apply-Language
-Update-View
+
+# Die Felder tragen bis zur ersten Abfrage einen Platzhalter. "-" waere hier falsch:
+# Das sieht nach einer Auskunft aus, obwohl noch gar nichts gelesen wurde.
+foreach ($n in 'TxtEdition','TxtLast','TxtNext','TxtDelta','TxtTaskState','TxtWinRE',
+               'TxtPoints','TxtOldest','TxtStorage') {
+    $ctl[$n].Text = T 'loading'
+}
 
 # Die Arbeitsflaeche ist der Bildschirm ohne Taskleiste - was hineinpasst, kann von ihr
 # nicht verdeckt werden. Davon geht noch eine Reserve ab, damit das Fenster nicht bündig an
@@ -2086,7 +2714,17 @@ $window.Height    = [math]::Min($window.MaxHeight, 800)
 
 # Erst nach dem ersten Zeichnen steht fest, wie hoch der Inhalt tatsaechlich ist. Passt er
 # ohne Rollbalken und laesst der Bildschirm es zu, waechst das Fenster darauf.
+# Update-View fragt Aufgabenplaner, VSS und Registry ab; zusammen sind das je nach
+# Rechner ein bis zwei Sekunden, in denen frueher nichts zu sehen war - man haelt das
+# fuer "es passiert nichts". Deshalb laeuft die Abfrage erst, nachdem das Fenster
+# gezeichnet wurde: Es steht sofort da, mit Platzhaltern, und fuellt sich gleich darauf.
+$script:FirstFill = $false
 $window.Add_ContentRendered({
+    if (-not $script:FirstFill) {
+        $script:FirstFill = $true
+        try { Update-View } catch { Write-Log "$(T 'logError'): $($_.Exception.Message)" }
+        try { $window.UpdateLayout() } catch { }
+    }
     try {
         $sv     = $window.Content
         $panel  = $sv.Content
@@ -2107,6 +2745,78 @@ $window.Add_ContentRendered({
 # Bewusst englisch, egal welche Anzeigesprache eingestellt ist: Diese Ausgabe wird von
 # Skripten gelesen und in Fehlerberichte kopiert, da ist eine stabile Sprache mehr wert
 # als eine hoefliche. Rueckgabewerte: 0 in Ordnung, 1 Eingabefehler.
+# "snapshot" und "autostart" brauchen kein Fenster. Der Zweig sitzt vor dem von
+# "apply", damit beide dieselbe Vorpruefung teilen.
+if ($Snapshot -or $AutoStart) {
+    $script:Headless = $true
+
+    if ($Snapshot) {
+        try {
+            Invoke-TaskNow
+            exit 0
+        } catch {
+            Write-Host "pitr-config: $($_.Exception.Message)"
+            exit 1
+        }
+    }
+
+    $words = @($Options -split '\s+' | Where-Object { $_ -ne '' })
+    if ($words.Count -gt 0 -and $words[0] -ieq 'autostart') { $words = @($words[1..($words.Count - 1)]) }
+
+    $mode = if ($words.Count -gt 0) { $words[0].ToLower() } else { 'status' }
+    $delay = 5
+    foreach ($w in $words) {
+        if ($w -match '^delay=(\d+)m?$') { $delay = [int]$Matches[1] }
+    }
+
+    switch ($mode) {
+        'on' {
+            if ($delay -lt 1 -or $delay -gt 60) {
+                Write-Host 'pitr-config: delay must be between 1 and 60 minutes'
+                exit 1
+            }
+            # "copy" nimmt dem Skriptbetrieb die Rueckfrage ab, die das Fenster stellt.
+            $path = $env:PITR_SELF
+            if (-not (Test-SelfPathLocal)) {
+                if ($words -contains 'copy') {
+                    $path = Copy-SelfLocal
+                    Write-Host "copied to $path"
+                } else {
+                    Write-Host 'pitr-config: WARNING - this file is not on a fixed local drive.'
+                    Write-Host '  The task runs as SYSTEM, which reaches the network as the computer'
+                    Write-Host '  account, so a share that opens for you may still be out of reach.'
+                    Write-Host '  Add "copy" to place a copy in ProgramData and use that instead.'
+                }
+            }
+            try {
+                Set-AutoStart -DelayMinutes $delay -SelfPath $path
+                Write-Host "startup snapshot registered, $delay minutes after boot"
+                exit 0
+            } catch {
+                Write-Host "pitr-config: $($_.Exception.Message)"
+                exit 1
+            }
+        }
+        'off' {
+            if (Remove-AutoStart) { Write-Host 'startup snapshot removed' }
+            else { Write-Host 'startup snapshot was not registered' }
+            exit 0
+        }
+        default {
+            $a = Get-AutoStart
+            if ($null -eq $a) { Write-Host 'startup snapshot: off'; exit 0 }
+            Write-Host "startup snapshot: on, $($a.Delay) minutes after boot"
+            $s = Get-AutoStartState
+            if ($null -ne $s) {
+                Write-Host "  runs: $($s.Path)"
+                if ($s.Gone) { Write-Host '  WARNING - that file is gone; run "autostart on copy" again' }
+                elseif ($s.Stale) { Write-Host "  WARNING - that copy is version $($s.Version), this one is $Version" }
+            }
+            exit 0
+        }
+    }
+}
+
 if ($Apply) {
     $spec = @{
         freq   = @{ Name = 'SnapshotInterval'; Min = 60;   Max = 1440;  Unit = 'min' }
@@ -2161,6 +2871,10 @@ if ($Apply) {
         '  active  on | off      the feature itself',
         '  reset                 removes every value this tool has written',
         '  status                prints the values in effect and writes nothing',
+        '',
+        'Startup snapshot: pitr-config.cmd autostart on [delay=<n>m] [copy] | off | status',
+        '  copy    put a copy in ProgramData first - a task runs as SYSTEM and may not',
+        '          reach the network share this file sits on',
         '',
         '  Any setting also takes "default", which removes that single override.',
         '  Values are written at policy level and outrank the Settings app.',
@@ -2265,6 +2979,9 @@ if ($SelfTest) {
         Write-Host "  Gruppen      : $($ctl.GrpState.Header) | $($ctl.GrpPoints.Header) | $($ctl.GrpSet.Header) | $($ctl.GrpLog.Header)"
         Write-Host "  Spalten      : $(($ctl.LstPoints.View.Columns | ForEach-Object { $_.Header }) -join ' | ')"
         Write-Host "  Schnappschuss: $($ctl.BtnSnapNow.Content) - $($ctl.TxtSnapHint.Text)"
+        Write-Host "  Beim Start   : [$(if ($ctl.ChkAuto.IsChecked) { 'x' } else { ' ' })] $($ctl.ChkAuto.Content) ($(($ctl.CmbAutoDelay.Items | ForEach-Object { $_.Content }) -join ' | '))"
+        Write-Host "  Start-Hinweis: $($ctl.TxtAutoHint.Text)"
+        Write-Host "  Veraltet-Text: $((T 'staleOld') -f '1.5.0', 'C:\ProgramData\pitr-config\pitr-config.cmd', $Version)"
         Write-Host "  WinRE        : $($ctl.CapWinRE.Text) $($ctl.TxtWinRE.Text) [$($ctl.BtnWinRE.Content)]"
         Write-Host "  WinRE-Warnung: $($ctl.TxtWinReNote.Text)"
         Write-Host "  Kopierknopf  : $($ctl.BtnCopy.Content) - $($ctl.TxtCopyHint.Text)"

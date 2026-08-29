@@ -40,7 +40,7 @@ switch at any time. The window also links to the project and to the
 language you are currently using.
 
 ![The tool running on Windows 11 Pro: current state, existing restore points, and the four
-settings](docs/screenshot.png?v=1.5.0b)
+settings](docs/screenshot.png?v=1.6.0b)
 <!-- The ?v= is a cache buster. GitHub proxies README images and caches them by URL,
      so replacing the file alone keeps serving the old picture for a long time.
      Bump this whenever the screenshot is regenerated. -->
@@ -270,6 +270,99 @@ The state is read from `%SystemRoot%\System32\Recovery\ReAgent.xml` rather than 
 output of `reagentc /info`, because that output is translated and this tool speaks seven
 languages. The partition behind it is found through the disk number and byte offset recorded
 in that same file. If any of it fails, the line says *not determinable* — no guess.
+
+### How long a snapshot takes
+
+The log reports the runtime of every snapshot the tool triggers, and the restore point list has
+a **Duration** column for all of them — including the runs Windows starts on its own.
+
+That column needs a source, and Windows offers exactly one. The duration of a shadow copy is
+recorded nowhere: `Win32_ShadowCopy` knows only a timestamp, and the paired events in
+`Microsoft-Windows-VolumeSnapshot-Driver/Operational` describe volumes going online and
+offline, not a snapshot being made. What does work is the Task Scheduler history — events 100
+and 102 share an instance id, and the difference between them is the runtime of `PITRTask`. A
+restore point is matched to the run whose window contains its timestamp; the runs lie hours
+apart, so there is nothing to confuse.
+
+Windows keeps that history switched off by default. While it is off the column shows a dash,
+and a line under the list offers to enable it:
+
+```
+wevtutil sl Microsoft-Windows-TaskScheduler/Operational /e:true
+```
+
+The tool never does this on its own, and the button asks first — it is a system-wide setting
+that from then on logs every scheduled task on the machine into a 10 MB ring buffer. It also
+does not work backwards: points that already exist keep no duration, however long they took.
+
+### A point at every system start
+
+The checkbox under the green button, **At every system start**, has the tool create a restore
+point a few minutes after every boot.
+
+Windows already wants one. `PITRTask` carries a boot trigger of its own, with a thirty minute
+delay:
+
+```
+Trigger:  MSFT_TaskBootTrigger   Delay = PT30M
+          MSFT_TaskTimeTrigger   Repetition = PT1H
+```
+
+That trigger rarely produces anything, because the task also has `RunOnlyIfIdle = True` and a
+machine half an hour into its day is usually in use. The request goes to *Queued* and waits.
+
+The checkbox does not add a second trigger and does not touch the Windows task. It registers a
+small task of its own, `\pitr-config\Startup snapshot`, which after the chosen delay does
+exactly what the button does: lift the idle condition for one run, start the task, put the
+condition back. Permanently disabling `RunOnlyIfIdle` would be the lazier route and a worse
+one — shadow copies would then start in the middle of someone's work, and the next feature
+update resets the value anyway.
+
+**Why a delay at all.** A machine that has just booted is busy with services, drivers, the
+antivirus and often Windows Update. A shadow copy competes with all of it, and the VSS writers
+are not necessarily responsive yet. Microsoft's own answer to this is thirty minutes; the tool
+offers 1 to 30 and defaults to five, which is late enough to be out of the boot storm and early
+enough to still mean "shortly after the start".
+
+**At startup, not at logon.** The task runs as `SYSTEM` with a boot trigger, so it fires
+without anyone signing in — on a machine that boots to the lock screen and stays there, the
+point is still created.
+
+> **One caveat worth knowing: Fast Startup.** With Fast Startup enabled — the Windows default
+> on most machines — shutting down and switching on again is a resume from hibernation, not a
+> boot, and boot triggers do not fire. A *restart* is a real boot and does trigger it. If the
+> point matters to you on every power-on, either turn Fast Startup off, or rely on the hourly
+> schedule instead. The tool cannot work around this; nothing can, short of changing how the
+> machine shuts down.
+
+From the command line:
+
+```
+pitr-config.cmd autostart on delay=5m
+pitr-config.cmd autostart off
+pitr-config.cmd autostart status
+```
+
+And the same thing once, without the task:
+
+```
+pitr-config.cmd snapshot
+```
+
+Both need an elevated prompt, like `apply`. **It cannot work from a network share**, and the reason is worth knowing: the task runs as
+`SYSTEM`, and `SYSTEM` reaches the network as the *computer account*, not as the person signed
+in. A share that opens without a murmur in Explorer is therefore usually out of reach for the
+task. Switching the checkbox on from such a path offers to copy the file to
+`%ProgramData%\pitr-config\` and to register the task against that copy; on the command line,
+add `copy` to do the same. To tell this apart from a boot-timing problem, run the task by hand
+while signed in — if it fails then too, it is access and not timing.
+
+That copy then has a life of its own: the task keeps the path it was given, so a newer version
+started from the share leaves the old copy running at every boot, quietly. The window compares
+the two whenever it refreshes and says so, with a button that refreshes the copy and keeps the
+delay. The version is read out of the file; if two files carry the same version but differ,
+the checksums settle it. On the command line, `autostart status` prints the path the task uses
+and warns when it is behind.
 
 ### How the snapshot on demand works
 

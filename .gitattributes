@@ -8,3 +8,4 @@
 *.cmd text eol=crlf
 
 *.md text eol=lf
+*.html text eol=lf

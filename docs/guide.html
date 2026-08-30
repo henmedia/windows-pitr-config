@@ -76,11 +76,14 @@
 <nav class="langbar" id="langbar">
   <button type="button" data-lang="en">EN</button>
   <button type="button" data-lang="de">DE</button>
+  <button type="button" data-lang="nl">NL</button>
   <button type="button" data-lang="fr">FR</button>
   <button type="button" data-lang="es">ES</button>
   <button type="button" data-lang="pt">PT</button>
   <button type="button" data-lang="it">IT</button>
   <button type="button" data-lang="pl">PL</button>
+  <button type="button" data-lang="uk">UK</button>
+  <button type="button" data-lang="cs">CS</button>
 </nav>
 
 <!-- ============================================================= ENGLISH == -->
@@ -347,6 +350,142 @@
   <p>Das Werkzeug ist kostenlos und bleibt es. Wenn es einen Nachmittag Windows-Neuinstallation
      erspart hat, ist ein Kaffee willkommen: <a href="https://www.paypal.me/teslapunk">paypal.me/teslapunk</a>. Im Werkzeug selbst wird nie nach Geld gefragt
      &mdash; kein Hinweis, kein Link, keine Erinnerung.</p>
+</section>
+
+<!-- =============================================================== DUTCH == -->
+<section data-lang="nl" hidden>
+  <h1>pitr-config — korte handleiding</h1>
+  <p class="sub">Point-in-time restore op Windows 11 instellen.</p>
+
+  <h2>Waar dit hulpprogramma voor dient</h2>
+  <p>Windows 11 kan volledige systeemmomentopnamen maken en de computer terugzetten naar een
+     eerdere staat. Hoe <b>vaak</b> dat gebeurt en hoe <b>lang</b> een momentopname bewaard
+     blijft, is alleen instelbaar op de Enterprise-editie — overal elders staan die twee
+     keuzelijsten grijs.</p>
+  <p>Dit hulpprogramma stelt ze toch in. De beperking zit alleen in de gebruikersinterface van
+     Instellingen, niet in de onderliggende engine, en die engine haalt zijn configuratie uit
+     een plek waar het hulpprogramma rechtstreeks naartoe kan schrijven.</p>
+
+  <h2>Een momentopname wanneer die nodig is</h2>
+  <p>De groene knop bovenaan het venster, <b>Nu momentopname maken</b>, maakt direct een
+     herstelpunt aan — zonder te wachten op het schema en zonder dat er een instelling
+     verandert. Eén klik die de moeite waard is vóór een stuurprogramma-installatie, een
+     ingreep in het register, of de eerste keer dat onbekende software wordt gestart.</p>
+  <p>Het duurt even: de taak draait, Windows schrijft de schaduwkopie, en het nieuwe punt
+     verschijnt daarna in de lijst eronder. Omdat de geplande taak verder alleen draait
+     terwijl de computer inactief is, heft de knop die voorwaarde voor deze ene keer op en
+     herstelt hem daarna.</p>
+
+  <p>Het selectievakje eronder, <b>Bij elke systeemstart</b>, doet hetzelfde enkele minuten na
+     elke start. Windows vraagt bij het opstarten sowieso om een punt, maar dat verzoek wacht
+     tot het systeem inactief is - en dat is een net gestarte computer niet. Let op: bij
+     ingeschakelde snelle start is afsluiten en weer inschakelen een hervatting, geen start,
+     en gaat er geen opstarttrigger af; een herstart daarentegen wel.</p>
+
+  <h2>En de weg terug</h2>
+  <p>Een herstelpunt wordt toegepast vanuit de Windows-herstelomgeving, niet vanuit een lopend
+     Windows. <b>Opnieuw opstarten naar herstel</b>, naast de statusregel, start daar direct
+     naartoe. Windows biedt die route ook zelf &mdash; Instellingen &rarr; Systeem &rarr;
+     Herstel &rarr; Geavanceerd opstarten &mdash; maar wel meerdere klikken verwijderd van
+     alles wat met herstelpunten te maken heeft.</p>
+  <p>Diezelfde regel laat zien of die omgeving er überhaupt is. Is ze uitgeschakeld, dan kan
+     niemand een herstelpunt toepassen, en de regel wordt rood.</p>
+
+  <h2>Of gewoon één bestand, niet het hele systeem</h2>
+  <p>Herstelpunten zijn niet alleen bedoeld om de hele schijf terug te draaien. Rechtsklik op
+     een willekeurig bestand of map, open <b>Eigenschappen</b>, en het tabblad
+     <b>Vorige versies</b> toont elk herstelpunt dat het heeft vastgelegd &mdash;
+     <b>Openen</b> toont de oude inhoud zonder iets te wijzigen, <b>Herstellen</b> brengt
+     alleen dat ene item terug. Geen herstelomgeving, geen herstart: dit werkt vanuit een
+     werkend Windows, met dezelfde schaduwkopieën die het hulpprogramma toch al aanmaakt.</p>
+  <p>Windows biedt dit al jaren, op elke editie; wat verandert met frequentere herstelpunten
+     is alleen hoe ver de lijst terugreikt.</p>
+
+  <h2>Aan de slag</h2>
+  <p>Dubbelklik op <code>pitr-config.cmd</code>. Het bestand vraagt zelf om beheerdersrechten
+     en opent daarna een venster. Er wordt pas iets geschreven na het indrukken van een knop.
+     Het bestand mag net zo goed op een USB-stick of een netwerklocatie staan; het draait
+     vanaf waar het staat.</p>
+  <p>De taal volgt de Windows-weergavetaal; de knoppen rechtsboven schakelen op elk moment
+     om.</p>
+  <p>Bij het starten vraagt het hulpprogramma aan GitHub of er een nieuwere versie is en toont
+     dan een regel met een link als dat zo is. Er wordt nooit iets vanzelf gedownload of
+     geïnstalleerd, en een mislukte controle blijft stil. Starten als
+     <code>pitr-config.cmd noupdate</code> slaat de controle over.</p>
+
+  <h2>De knoppen</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Nu momentopname maken</th><td>Maakt direct een herstelpunt aan, zonder een instelling te wijzigen. De gemarkeerde knop bovenaan het venster.</td></tr>
+    <tr><th>Toepassen</th><td>Schrijft de gekozen instellingen. Een nieuwe frequentie wordt van kracht bij de volgende uitvoering van de geplande taak.</td></tr>
+    <tr><th>Toepassen en nu uitvoeren</th><td>Schrijft de instellingen en start de taak meteen, zodat direct een herstelpunt ontstaat en het schema opnieuw wordt berekend.</td></tr>
+    <tr><th>Vernieuwen</th><td>Leest de huidige status opnieuw in.</td></tr>
+    <tr><th>Alles resetten</th><td>Verwijdert, na bevestiging, alle door het hulpprogramma geschreven waarden. Windows keert terug naar zijn eigen standaardinstellingen.</td></tr>
+    <tr><th>Opnieuw opstarten naar herstel</th><td>Start Windows opnieuw op in de herstelomgeving, waar een herstelpunt kan worden toegepast. Niet-opgeslagen werk in andere programma's gaat verloren.</td></tr>
+    <tr><th>Status kopiëren</th><td>Kopieert de huidige status als platte tekst naar het klembord &mdash; bedoeld voor een forumbericht of bugmelding.</td></tr>
+  </table></div>
+
+  <h2>De instellingen</h2>
+  <ul>
+    <li><b>Functie ingeschakeld</b> — schakelt Point-in-time restore aan of uit.</li>
+    <li><b>Frequentie</b> — 1 tot 24 uur tussen herstelpunten.</li>
+    <li><b>Bewaartermijn</b> — 1 tot 7 dagen voordat een punt automatisch wordt verwijderd.</li>
+    <li><b>Maximale opslag</b> — 2 tot 50 GB voor alle herstelpunten samen.</li>
+  </ul>
+  <p>Elke lijst begint met <b>Windows-standaard</b>, wat precies die ene overschrijving weer
+     opheft. Onder elke lijst staat in grijs de waarde die nu geldt en waar die vandaan
+     komt.</p>
+
+  <h2>Vijf dingen die de moeite waard zijn om te weten</h2>
+  <div class="note">
+    <p><b>Frequentie is een vroegst mogelijke interval, geen belofte.</b> Herstelpunten
+       ontstaan alleen terwijl het systeem inactief is. Is de computer in gebruik of
+       uitgeschakeld, dan wordt de uitvoering uitgesteld en kan een beurt helemaal vervallen.
+       Wie één uur instelt op een computer die de hele dag wordt gebruikt, krijgt geen
+       vierentwintig punten. Het venster toont de status van de taak, zodat een wachtende
+       uitvoering zichtbaar blijft. Blijven punten helemaal uit, dan zegt <b>Inactiviteit
+       controleren</b> verderop of er nog wel een inactieve status wordt gemeld.</p>
+    <p><b>Alleen het Windows-station wordt gedekt.</b> Andere partities en andere schijven
+       zijn niet inbegrepen, ook niet op dezelfde fysieke schijf. Gegevens daar worden noch
+       beschermd noch teruggezet, en hebben nog steeds een eigen back-up nodig.</p>
+    <p><b>Dit is een niet-officiële route.</b> De configuratiewaarden zijn niet door Microsoft
+       gedocumenteerd. Een toekomstige Windows-versie kan ze wijzigen; daarna geldt gewoon
+       weer het normale gedrag van Windows.</p>
+    <p><b>De herstelomgeving moet aanwezig zijn.</b> Een herstelpunt wordt vandaaruit
+       toegepast, niet vanuit Windows zelf. Het venster toont of ze aanwezig is; ontbreekt
+       ze, dan hebben de punten geen nut &mdash; een verhoogd <code>reagentc /enable</code>
+       herstelt haar meestal.</p>
+    <p><b>Dit is geen back-up.</b> De punten staan op precies de schijf die ze beschermen
+       &mdash; een defecte schijf, een gestolen computer of een gewist volume neemt ze mee.
+       Point-in-time restore is het antwoord op een mislukte update of een slecht
+       stuurprogramma; tegen hardwarestoring, diefstal of ransomware helpt alleen een back-up
+       op afzonderlijke media.</p>
+  </div>
+
+  <h2>Als er helemaal geen herstelpunt meer verschijnt</h2>
+  <p>Een uitvoering vindt alleen plaats terwijl het systeem inactief is, dus eentje die
+     vervalt terwijl de computer in gebruik is, wordt genegeerd &mdash; stilzwijgend, zonder
+     regel in enig logboek. Het venster telt die gevallen naast de taakstatus als
+     <i>overgeslagen uitvoeringen</i>.</p>
+  <p>Op zichzelf betekenen ze niets; ze zijn de normale gang van zaken zolang iemand aan het
+     werk is. Ze worden pas een symptoom als Windows helemaal geen inactieve status meer
+     meldt. Vanaf dat moment draait niets meer dat op inactiviteit wacht &mdash;
+     momentopnamen zijn slechts wat het eerst opvalt.</p>
+  <p>Zodra uitvoeringen zijn overgeslagen, verschijnt een vak met <b>Inactiviteit
+     controleren</b>. Het leest elke andere geplande taak op deze computer die op
+     inactiviteit wacht &mdash; schijfopruiming, opslagverkenner en nog twee dozijn andere
+     &mdash; en vergelijkt ze met de laatste systeemstart. Is er minstens één uitgevoerd, dan
+     werkt de inactiviteitsdetectie en was de computer gewoon in gebruik. Is er geen enkele
+     uitgevoerd terwijl het systeem al uren draait, dan is de inactiviteit geblokkeerd,
+     meestal door een programma of stuurprogramma dat een energieaanvraag vasthoudt. Een
+     verhoogd <code>powercfg /requests</code> noemt het; dat proces beëindigen, of een
+     herstart, maakt het weer vrij.</p>
+  <h2>Alles ongedaan maken</h2>
+  <p><b>Alles resetten</b> verwijdert alles in één stap. Bestaande herstelpunten worden door
+     dit hulpprogramma nooit verwijderd — het wijzigt uitsluitend de configuratie.</p>
+  <h2>Ondersteuning</h2>
+  <p>Het hulpprogramma is gratis en blijft dat. Als het een middag Windows opnieuw installeren
+     heeft bespaard, is een kopje koffie welkom: <a href="https://www.paypal.me/teslapunk">paypal.me/teslapunk</a>. In het hulpprogramma zelf wordt nooit om geld
+     gevraagd &mdash; geen melding, geen link, geen herinnering.</p>
 </section>
 
 <!-- ============================================================== FRENCH == -->
@@ -1053,6 +1192,269 @@
      &#380;adnego komunikatu, &#380;adnego odno&#347;nika, &#380;adnego przypomnienia.</p>
 </section>
 
+<!-- ============================================================ UKRAINIAN == -->
+<section data-lang="uk" hidden>
+  <h1>pitr-config — короткий посібник</h1>
+  <p class="sub">Налаштування Point-in-time restore у Windows 11.</p>
+
+  <h2>Для чого цей інструмент</h2>
+  <p>Windows 11 уміє створювати повні знімки системи й повертати комп'ютер до попереднього
+     стану. Наскільки <b>часто</b> це відбувається і як <b>довго</b> зберігається знімок,
+     можна налаштувати лише в редакції Enterprise — усюди інде обидва ці спадні списки
+     затемнені.</p>
+  <p>Цей інструмент налаштовує їх попри це. Обмеження сидить лише в інтерфейсі застосунку
+     "Параметри", а не в самому рушії, а рушій читає свою конфігурацію з місця, куди
+     інструмент може писати напряму.</p>
+
+  <h2>Знімок тоді, коли він потрібен</h2>
+  <p>Зелена кнопка вгорі вікна, <b>Створити знімок зараз</b>, одразу створює точку
+     відновлення — без очікування на розклад і без зміни жодного налаштування. Один клік,
+     який варто витратити перед встановленням драйвера, втручанням у реєстр або першим
+     запуском незнайомого програмного забезпечення.</p>
+  <p>Це триває якийсь час: завдання виконується, Windows записує тіньову копію, і нова точка
+     з'являється в списку нижче. Оскільки заплановане завдання інакше виконується лише в
+     стані бездіяльності, кнопка знімає цю умову на цей один запуск і потім відновлює її.</p>
+
+  <p>Прапорець під ним, <b>При кожному запуску системи</b>, робить те саме через кілька
+     хвилин після кожного старту. Windows і так запитує точку під час запуску, але цей запит
+     чекає на бездіяльність системи - а щойно запущений комп'ютер її не має. Варто знати: за
+     увімкненого швидкого запуску вимкнення й повторне ввімкнення - це відновлення роботи, а
+     не запуск, і жоден тригер запуску не спрацьовує; перезавантаження ж - справжній
+     запуск.</p>
+
+  <h2>І шлях назад</h2>
+  <p>Точку відновлення застосовують із середовища відновлення Windows, а не зсередини
+     робочого Windows. <b>Перезавантажити у відновлення</b>, поруч із рядком стану,
+     перезавантажує комп'ютер прямо туди. Windows пропонує цей шлях і сам &mdash; Параметри
+     &rarr; Система &rarr; Відновлення &rarr; Додаткові варіанти запуску &mdash; але це
+     кілька кліків від усього, що стосується точок відновлення.</p>
+  <p>Той самий рядок показує, чи існує це середовище взагалі. Якщо його вимкнено, ніхто не
+     може застосувати точку відновлення, і рядок стає червоним.</p>
+
+  <h2>Або лише один файл, а не вся система</h2>
+  <p>Точки відновлення потрібні не лише для відкату всього диска. Клацни правою кнопкою на
+     будь-якому файлі чи папці, відкрий <b>Властивості</b>, і вкладка <b>Попередні
+     версії</b> перелічить кожну точку відновлення, що зафіксувала його &mdash;
+     <b>Відкрити</b> показує старий вміст, нічого не змінюючи, <b>Відновити</b> повертає
+     лише цей один елемент. Жодного середовища відновлення, жодного перезавантаження: це
+     працює зсередини робочого Windows, використовуючи ті самі тіньові копії, які інструмент
+     і так створює.</p>
+  <p>Windows пропонує це роками, у кожній редакції; з частішими точками відновлення
+     змінюється лише те, як далеко в минуле сягає список.</p>
+
+  <h2>Початок роботи</h2>
+  <p>Двічі клацни <code>pitr-config.cmd</code>. Файл сам запитує права адміністратора, а
+     потім відкриває вікно. Нічого не записується, доки не натиснуто кнопку. Файл цілком
+     може лежати на USB-накопичувачі або мережевому ресурсі - він виконується звідти, де
+     є.</p>
+  <p>Мова відповідає мові інтерфейсу Windows; кнопки вгорі праворуч перемикають її
+     будь-коли.</p>
+  <p>Під час запуску інструмент запитує GitHub, чи існує новіша версія, і показує рядок із
+     посиланням, якщо так. Він ніколи нічого не завантажує й не встановлює сам, а невдала
+     перевірка минає мовчки. Запуск як <code>pitr-config.cmd noupdate</code> пропускає
+     перевірку.</p>
+
+  <h2>Кнопки</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Створити знімок зараз</th><td>Одразу створює точку відновлення, без зміни жодного налаштування. Виділена кнопка вгорі вікна.</td></tr>
+    <tr><th>Застосувати</th><td>Записує вибрані налаштування. Нова частота набуде чинності під час наступного запуску запланованого завдання.</td></tr>
+    <tr><th>Застосувати й запустити зараз</th><td>Записує налаштування й одразу запускає завдання, тож точка виникає негайно, а розклад перераховується заново.</td></tr>
+    <tr><th>Оновити</th><td>Повторно зчитує поточний стан.</td></tr>
+    <tr><th>Скинути все</th><td>Після підтвердження видаляє всі значення, записані інструментом. Windows повертається до власних типових значень.</td></tr>
+    <tr><th>Перезавантажити у відновлення</th><td>Перезавантажує Windows у середовище відновлення, де можна застосувати точку відновлення. Незбережена робота в інших програмах буде втрачена.</td></tr>
+    <tr><th>Копіювати стан</th><td>Копіює поточний стан у буфер обміну як звичайний текст &mdash; створено для допису на форумі чи звіту про помилку.</td></tr>
+  </table></div>
+
+  <h2>Налаштування</h2>
+  <ul>
+    <li><b>Функцію ввімкнено</b> — вмикає або вимикає Point-in-time restore.</li>
+    <li><b>Частота</b> — від 1 до 24 годин між точками відновлення.</li>
+    <li><b>Термін зберігання</b> — від 1 до 7 днів, перш ніж точку буде видалено автоматично.</li>
+    <li><b>Максимальний обсяг</b> — від 2 до 50 ГБ для всіх точок відновлення разом.</li>
+  </ul>
+  <p>Кожен список починається з пункту <b>Типове значення Windows</b>, який знову скасовує
+     саме це одне перевизначення. Під кожним списком сірим кольором показано значення, що
+     діє зараз, і звідки воно походить.</p>
+
+  <h2>П'ять речей, які варто знати</h2>
+  <div class="note">
+    <p><b>Частота - це найшвидший можливий інтервал, а не обіцянка.</b> Точки відновлення
+       виникають лише поки система бездіяльна. Якщо комп'ютер використовується або
+       вимкнений, запуск відкладається, і момент може повністю пропасти. Хто налаштує одну
+       годину на комп'ютері, яким користуються цілий день, не отримає двадцяти чотирьох
+       точок. Вікно показує стан завдання, тож очікуваний запуск лишається видимим. Якщо
+       точки взагалі перестають з'являтися, <b>Перевірити бездіяльність</b> нижче підкаже,
+       чи бездіяльність узагалі ще повідомляється.</p>
+    <p><b>Охоплюється лише диск Windows.</b> Інші розділи та інші диски не враховуються,
+       навіть на тому самому фізичному диску. Дані там не захищені й не відновлюються та
+       все одно потребують власної резервної копії.</p>
+    <p><b>Це неофіційний шлях.</b> Значення конфігурації не задокументовані Microsoft.
+       Майбутня версія Windows може їх змінити; тоді просто знову діє звичайна поведінка
+       Windows.</p>
+    <p><b>Середовище відновлення має існувати.</b> Точку відновлення застосовують саме з
+       нього, а не зсередини Windows. Вікно показує, чи воно є; якщо його вимкнено, точки
+       марні &mdash; <code>reagentc /enable</code> з підвищеними правами зазвичай його
+       повертає.</p>
+    <p><b>Це не резервна копія.</b> Точки лежать саме на тому диску, який захищають
+       &mdash; несправний диск, викрадений комп'ютер або стертий том забирає їх із собою.
+       Point-in-time restore - це відповідь на невдале оновлення чи поганий драйвер; проти
+       апаратної несправності, крадіжки чи програми-вимагача допомагає лише резервна копія
+       на окремому носії.</p>
+  </div>
+
+  <h2>Коли жодна точка відновлення більше не з'являється</h2>
+  <p>Запуск відбувається лише в стані бездіяльності, тож той, що припадає на момент
+     використання комп'ютера, відкидається &mdash; мовчки, без жодного рядка в будь-якому
+     журналі. Вікно рахує ці випадки поряд зі станом завдання як <i>пропущені запуски</i>.</p>
+  <p>Самі по собі вони нічого не означають; це звичайна справа, поки хтось працює за
+     комп'ютером. Вони стають симптомом лише тоді, коли Windows узагалі перестає повідомляти
+     про бездіяльність. Відтоді не виконується вже ніщо, що чекає на бездіяльність &mdash;
+     знімки - лише те, що впадає в очі першим.</p>
+  <p>Щойно якісь запуски пропущено, з'являється рамка з кнопкою <b>Перевірити
+     бездіяльність</b>. Вона зчитує кожне інше заплановане завдання на цьому комп'ютері, що
+     чекає на бездіяльність &mdash; очищення диска, аналізатор сховища й ще два десятки
+     інших &mdash; і порівнює їх з останнім запуском системи. Якщо хоч одне виконалося,
+     виявлення бездіяльності працює, а комп'ютер був просто у використанні. Якщо жодне не
+     виконалося, а система працює вже годинами, бездіяльність заблоковано - зазвичай якоюсь
+     програмою чи драйвером, що утримує запит живлення. Команда <code>powercfg
+     /requests</code> із підвищеними правами назве його; завершення цього процесу або
+     перезавантаження звільняє його.</p>
+  <h2>Скасування всього</h2>
+  <p><b>Скинути все</b> видаляє все за один крок. Наявні точки відновлення цей інструмент
+     ніколи не видаляє — він змінює виключно конфігурацію.</p>
+  <h2>Підтримка</h2>
+  <p>Інструмент безкоштовний і залишається таким. Якщо він заощадив вечір перевстановлення
+     Windows, кава буде доречною: <a href="https://www.paypal.me/teslapunk">paypal.me/teslapunk</a>. Сам інструмент ніколи не просить грошей &mdash; жодного
+     повідомлення, жодного посилання, жодного нагадування.</p>
+</section>
+
+<!-- ================================================================ CZECH == -->
+<section data-lang="cs" hidden>
+  <h1>pitr-config — stručný návod</h1>
+  <p class="sub">Nastavení Point-in-time restore ve Windows 11.</p>
+
+  <h2>K čemu tento nástroj slouží</h2>
+  <p>Windows 11 umí vytvářet úplné snímky systému a vrátit počítač do dřívějšího stavu. Jak
+     <b>často</b> se to děje a jak <b>dlouho</b> se snímek uchovává, lze nastavit jen v
+     edici Enterprise — všude jinde jsou tyto dvě rozbalovací nabídky zašedlé.</p>
+  <p>Tento nástroj je nastaví přesto. Omezení sedí jen v uživatelském rozhraní Nastavení, ne
+     v samotném mechanismu, a ten mechanismus čte svou konfiguraci z místa, kam nástroj může
+     zapisovat přímo.</p>
+
+  <h2>Snímek, kdykoli je potřeba</h2>
+  <p>Zelené tlačítko nahoře v okně, <b>Vytvořit snímek nyní</b>, vytvoří bod obnovení
+     okamžitě — bez čekání na plán a beze změny jakéhokoli nastavení. Jedno kliknutí, které
+     stojí za to před instalací ovladače, zásahem do registru nebo prvním spuštěním
+     neznámého softwaru.</p>
+  <p>Chvíli to trvá: úloha proběhne, Windows zapíše stínovou kopii a nový bod se poté objeví
+     v seznamu níže. Protože naplánovaná úloha jinak běží jen při nečinnosti systému,
+     tlačítko tuto podmínku pro tento jeden běh zruší a poté ji obnoví.</p>
+
+  <p>Zaškrtávací políčko pod tím, <b>Při každém spuštění systému</b>, dělá totéž pár minut po
+     každém startu. Windows si o bod žádá při startu i tak, ale tento požadavek čeká na
+     nečinnost systému - a tu právě spuštěný počítač nemá. Stojí za povšimnutí: při
+     zapnutém rychlém spuštění je vypnutí a opětovné zapnutí obnovením, ne startem, a žádný
+     spouštěcí trigger se nespustí; restart naopak ano.</p>
+
+  <h2>A cesta zpět</h2>
+  <p>Bod obnovení se použije z prostředí pro obnovení Windows, ne z běžícího Windows.
+     <b>Restartovat do obnovení</b>, vedle řádku se stavem, restartuje počítač přímo tam.
+     Windows tuto cestu sám nabízí &mdash; Nastavení &rarr; Systém &rarr; Obnovení &rarr;
+     Pokročilé spuštění &mdash; ale je to několik kliknutí od čehokoli, co s body obnovení
+     souvisí.</p>
+  <p>Tentýž řádek ukazuje, zda toto prostředí vůbec existuje. Je-li vypnuté, nikdo nemůže bod
+     obnovení použít a řádek zčervená.</p>
+
+  <h2>Nebo jen jeden soubor, ne celý systém</h2>
+  <p>Body obnovení neslouží jen k vrácení celého disku zpět. Klikni pravým tlačítkem na
+     libovolný soubor nebo složku, otevři <b>Vlastnosti</b>, a karta <b>Předchozí
+     verze</b> vypíše každý bod obnovení, který jej zachytil &mdash; <b>Otevřít</b>
+     zobrazí starý obsah, aniž by se cokoli změnilo, <b>Obnovit</b> vrátí zpět jen tuto
+     jednu položku. Žádné prostředí pro obnovení, žádný restart: toto běží uvnitř funkčního
+     Windows, se stejnými stínovými kopiemi, které nástroj stejně vytváří.</p>
+  <p>Windows tohle nabízí už léta, v každé edici; s častějšími body obnovení se mění jen to,
+     jak daleko do minulosti seznam sahá.</p>
+
+  <h2>Začínáme</h2>
+  <p>Dvakrát klikni na <code>pitr-config.cmd</code>. Soubor si sám vyžádá práva správce a
+     poté otevře okno. Nic se nezapíše, dokud není stisknuto tlačítko. Soubor může stejně
+     dobře ležet na USB disku nebo síťovém sdílení; běží odtud, kde je.</p>
+  <p>Jazyk se řídí zobrazovacím jazykem Windows; tlačítka vpravo nahoře jej kdykoli
+     přepnou.</p>
+  <p>Při spuštění se nástroj zeptá GitHubu, zda existuje novější verze, a pokud ano, zobrazí
+     řádek s odkazem. Nikdy nic samo nestahuje ani neinstaluje a neúspěšná kontrola zůstává
+     tichá. Spuštění jako <code>pitr-config.cmd noupdate</code> kontrolu přeskočí.</p>
+
+  <h2>Tlačítka</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Vytvořit snímek nyní</th><td>Okamžitě vytvoří bod obnovení, beze změny jakéhokoli nastavení. Zvýrazněné tlačítko nahoře v okně.</td></tr>
+    <tr><th>Použít</th><td>Zapíše vybraná nastavení. Nová frekvence se projeví při příštím spuštění naplánované úlohy.</td></tr>
+    <tr><th>Použít a spustit nyní</th><td>Zapíše nastavení a rovnou spustí úlohu, takže ihned vznikne bod a plán se přepočítá.</td></tr>
+    <tr><th>Obnovit</th><td>Znovu načte aktuální stav.</td></tr>
+    <tr><th>Resetovat vše</th><td>Po potvrzení odstraní všechny hodnoty zapsané nástrojem. Windows se vrátí ke svým vlastním výchozím hodnotám.</td></tr>
+    <tr><th>Restartovat do obnovení</th><td>Restartuje Windows do prostředí pro obnovení, kde lze bod obnovení použít. Neuložená práce v jiných programech se ztratí.</td></tr>
+    <tr><th>Kopírovat stav</th><td>Zkopíruje aktuální stav do schránky jako prostý text &mdash; určeno pro příspěvek na fóru nebo hlášení chyby.</td></tr>
+  </table></div>
+
+  <h2>Nastavení</h2>
+  <ul>
+    <li><b>Funkce zapnuta</b> — zapíná nebo vypíná Point-in-time restore.</li>
+    <li><b>Frekvence</b> — 1 až 24 hodin mezi body obnovení.</li>
+    <li><b>Doba uchování</b> — 1 až 7 dní, než je bod automaticky smazán.</li>
+    <li><b>Maximální úložiště</b> — 2 až 50 GB pro všechny body obnovení dohromady.</li>
+  </ul>
+  <p>Každý seznam začíná položkou <b>Výchozí hodnota Windows</b>, která zruší přesně toto
+     jedno přepsání. Pod každým seznamem stojí šedě hodnota, která je aktuálně platná, a
+     odkud pochází.</p>
+
+  <h2>Pět věcí, které stojí za vědění</h2>
+  <div class="note">
+    <p><b>Frekvence je nejdřívější možný interval, ne slib.</b> Body obnovení vznikají jen
+       tehdy, když je systém nečinný. Pokud se počítač používá nebo je vypnutý, spuštění se
+       odloží a termín může zcela propadnout. Kdo nastaví jednu hodinu na počítači
+       používaném celý den, nezíská dvacet čtyři body. Okno zobrazuje stav úlohy, takže
+       čekající běh zůstává viditelný. Pokud body přestanou se objevovat úplně, <b>Zkontrolovat
+       nečinnost</b> níže řekne, zda je nečinnost ještě vůbec hlášena.</p>
+    <p><b>Pokrytý je jen disk Windows.</b> Ostatní oddíly a další disky nejsou zahrnuty, ani
+       na stejném fyzickém disku. Data tam nejsou ani chráněna, ani vracena zpět a stále
+       potřebují vlastní zálohu.</p>
+    <p><b>Toto je neoficiální cesta.</b> Konfigurační hodnoty nejsou dokumentované
+       společností Microsoft. Budoucí verze Windows je může změnit; pak platí prostě znovu
+       obvyklé chování Windows.</p>
+    <p><b>Prostředí pro obnovení musí existovat.</b> Bod obnovení se používá právě z něj,
+       ne z Windows. Okno ukazuje, zda je přítomné; pokud chybí, body nejsou k ničemu
+       &mdash; <code>reagentc /enable</code> se zvýšenými oprávněními jej obvykle obnoví.</p>
+    <p><b>Toto není záloha.</b> Body leží přesně na disku, který chrání &mdash; vadný disk,
+       ukradený počítač nebo smazaný svazek je vezme s sebou. Point-in-time restore je
+       odpovědí na nepovedenou aktualizaci nebo vadný ovladač; proti selhání hardwaru,
+       krádeži nebo ransomwaru pomůže jen záloha na odděleném médiu.</p>
+  </div>
+
+  <h2>Když se už neobjeví žádný bod obnovení</h2>
+  <p>Ke spuštění dochází jen při nečinnosti systému, takže to, které připadne na chvíli, kdy
+     se počítač používá, se zahodí &mdash; potichu, bez řádku v jakémkoli protokolu. Okno je
+     počítá vedle stavu úlohy jako <i>vynechaná spuštění</i>.</p>
+  <p>Samy o sobě nic neznamenají; jsou běžným případem, dokud někdo pracuje. Stanou se
+     příznakem teprve tehdy, když Windows přestane nečinnost hlásit úplně. Od té chvíle
+     neběží nic, co čeká na nečinnost &mdash; snímky jsou jen to, čeho si člověk všimne jako
+     první.</p>
+  <p>Jakmile jsou nějaká spuštění vynechána, objeví se rámeček s tlačítkem <b>Zkontrolovat
+     nečinnost</b>. Přečte každou jinou naplánovanou úlohu na tomto počítači, která čeká na
+     nečinnost &mdash; vyčištění disku, sledování úložiště a dva tucty dalších &mdash; a
+     porovná je s posledním spuštěním systému. Proběhla-li alespoň jedna, detekce nečinnosti
+     funguje a počítač byl prostě používán. Neproběhla-li žádná, zatímco systém běží už
+     hodiny, nečinnost je zablokovaná, obvykle nějakým programem nebo ovladačem, který drží
+     požadavek na napájení. Příkaz <code>powercfg /requests</code> se zvýšenými oprávněními
+     jej pojmenuje; ukončení tohoto procesu, nebo restart, jej uvolní.</p>
+  <h2>Vrácení všeho zpět</h2>
+  <p><b>Resetovat vše</b> odstraní všechno v jednom kroku. Existující body obnovení tento
+     nástroj nikdy nemaže — mění výhradně konfiguraci.</p>
+  <h2>Podpora</h2>
+  <p>Nástroj je zdarma a zůstane takový. Pokud ušetřil odpoledne strávené přeinstalováním
+     Windows, káva je vítána: <a href="https://www.paypal.me/teslapunk">paypal.me/teslapunk</a>. Samotný nástroj nikdy nežádá o peníze &mdash; žádné
+     upozornění, žádný odkaz, žádná připomínka.</p>
+</section>
+
 <footer>
   <a href="https://github.com/henmedia/windows-pitr-config">github.com/henmedia/windows-pitr-config</a>
   · MIT
@@ -1061,7 +1463,7 @@
 </div>
 <script>
 (function () {
-  var CODES = ['en', 'de', 'fr', 'es', 'pt', 'it', 'pl'];
+  var CODES = ['en', 'de', 'nl', 'fr', 'es', 'pt', 'it', 'pl', 'uk', 'cs'];
 
   function pick() {
     var h = (location.hash || '').replace('#', '').toLowerCase();

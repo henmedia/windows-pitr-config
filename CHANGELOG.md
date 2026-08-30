@@ -4,6 +4,29 @@ Notable changes are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] — 2026-08-30
+
+### Added
+
+- Dutch, Ukrainian and Czech interface translations, alongside the existing seven. The window
+  now carries ten language buttons (EN DE NL FR ES PT IT PL UK CS), and
+  [docs/guide.html](docs/guide.html) gained a section in each of the three. None of the three
+  has had a native-speaker pass yet, same as five of the seven before them.
+- A note in the README's *Versioning* section: a release that only adds a language is a patch,
+  not a minor version — the interface and its behaviour do not change, only what it can be read
+  in.
+
+### Fixed
+
+- Switching languages while "At every system start" was already on could reopen the startup
+  snapshot's copy-to-local prompt on every single switch. The delay dropdown is rebuilt on each
+  language change to relabel it, and `Items.Clear()` on a populated `ComboBox` fires
+  `SelectionChanged` by itself, before anything is reselected — that handler starts the same
+  routine a real click does. The rebuild is now silenced the same way the rest of the autostart
+  row already was.
+- The Age and Duration columns in the restore point list are right-aligned, header included —
+  they hold numbers, and a ragged left edge read worse than the ordinary case did.
+
 ## [1.7.0] — 2026-08-30
 
 ### Added

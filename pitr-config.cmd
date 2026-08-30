@@ -168,14 +168,14 @@ $ErrorActionPreference = 'Stop'
 # The one place the version is defined. It appears under the headline in the window
 # and in the selftest; a release is tagged with "v" followed by this value. Keeping
 # it out of the batch header above avoids having two numbers that can drift apart.
-$Version  = '1.7.0'
+$Version  = '1.7.1'
 
 # Asked on start unless PITR_NOUPDATE is set. Returns the newest release of the project.
 $UpdateApi = 'https://api.github.com/repos/henmedia/windows-pitr-config/releases/latest'
 $script:UpdateVersion = $null
 $script:UpdateUrl     = $null
 
-# Linked from the window. The guide carries all seven languages in one page and picks
+# Linked from the window. The guide carries all ten languages in one page and picks
 # one from the fragment. A copy of it sitting next to the .cmd wins over the online
 # version, so the tool stays fully usable on a stick without a network.
 $ProjectUrl = 'https://github.com/henmedia/windows-pitr-config'
@@ -532,6 +532,163 @@ de = @{
     copyHint   = 'Kopiert Edition, Einstellungen samt Quelle, Aufgabenstatus und Wiederherstellungspunkte als Text - für einen Forenbeitrag oder eine Fehlermeldung.'
     tipCopy    = 'Kopiert den aktuellen Zustand als Klartext in die Zwischenablage - Edition, Einstellungen samt Quelle, Aufgabenstatus, Wiederherstellungspunkte und Speicher. Gemacht für einen Forenbeitrag oder eine Fehlermeldung.'
     logCopied  = 'Zustand in die Zwischenablage kopiert.'
+}
+
+# ------------------------------------------------------------------ Dutch --
+nl = @{
+    winTitle   = 'Point-in-time restore'
+    headline   = 'Point-in-time restore'
+    subtitle   = 'Herstel naar een tijdstip (PITR)'
+    intro      = 'Windows biedt frequentie en bewaartermijn alleen op de Enterprise-editie aan. Dit hulpprogramma schrijft ze rechtstreeks in de configuratie van de PITR-engine, die geen editiecontrole uitvoert.'
+    lnkGuide   = 'Handleiding'
+    tipProject = 'Projectpagina op GitHub openen'
+    tipGuide   = 'Korte handleiding openen in de browser'
+    updAvail   = 'Versie {0} is beschikbaar - releasepagina openen'
+    tipUpdate  = 'Opent de downloadpagina in de browser. Er wordt niets automatisch gedownload of geïnstalleerd.'
+
+    grpState   = 'Huidige status'
+    capEdition = 'Windows-editie:'
+    capLast    = 'Laatste uitvoering:'
+    capNext    = 'Volgende uitvoering:'
+    capDelta   = 'Gepland interval:'
+    capTaskSt  = 'Taakstatus:'
+    tsReady    = 'gereed'
+    tsQueued   = 'wacht tot het systeem inactief is'
+    tsRunning  = 'wordt nu uitgevoerd'
+    tsDisabled = 'uitgeschakeld'
+    tsOverdue  = 'te laat met'
+    missedRuns = 'overgeslagen uitvoeringen: {0}'
+    btnIdleChk = 'Inactiviteit controleren'
+    idlePartial = ' Geteld zonder beheerdersrechten, dus alleen de taken die voor dit account zichtbaar zijn, zijn meegeteld.'
+    idleBanner = '{0} uitvoeringen zijn overgeslagen. Dat is normaal terwijl de computer in gebruik is - maar het kan ook betekenen dat Windows helemaal geen inactieve status meer meldt.'
+    idleBlocked = 'Windows meldt sinds {0} geen inactieve status meer. Sindsdien is geen van de {1} andere op inactiviteit wachtende taken uitgevoerd, dus dit reikt veel verder dan momentopnamen. Meestal houdt een programma of een stuurprogramma het systeem wakker - "powercfg /requests" in een opdrachtprompt met verhoogde rechten noemt het.'
+    idleFine   = 'Inactiviteitsdetectie werkt: {0} van de {1} andere op inactiviteit wachtende taken zijn uitgevoerd sinds het systeem is gestart, de laatste om {2}. De computer was op de geplande momenten gewoon in gebruik.'
+    idleEarly  = 'Geen van de {0} andere op inactiviteit wachtende taken is nog uitgevoerd, maar het systeem draait pas sinds {1} - te kort om iets te zeggen. Later nog eens controleren.'
+    idleChecking = 'de andere op inactiviteit wachtende taken worden gelezen ...'
+    logIdleChk = 'Inactiviteitscontrole: {0}'
+    staleSame  = 'De opstarttaak voert een andere build van dezelfde versie {0} uit {1} uit.'
+    noteIdle   = 'Herstelpunten ontstaan alleen terwijl het systeem inactief is. Is de computer in gebruik of uitgeschakeld, dan wordt de uitvoering uitgesteld - een geplande beurt kan daardoor ook helemaal vervallen. De ingestelde frequentie is dus een vroegst mogelijke interval, geen garantie. Met „Nu momentopname maken” bovenaan is op elk moment een punt af te dwingen.'
+
+    grpPoints  = 'Herstelpunten'
+    lblCount   = 'Aantal'
+    lblOldest  = 'Oudste punt'
+    lblStorage = 'Opslag op schijf'
+    stUsed     = 'in gebruik'
+    stAlloc    = 'gereserveerd'
+    stMax      = 'limiet'
+    stNoAdmin  = 'niet beschikbaar (beheerdersrechten vereist)'
+    noteStore  = 'Windows geeft opslag alleen per schijf op, nooit per punt - alle punten delen één gemeenschappelijk verschilgebied.'
+    tipStore   = 'In gebruik = gegevens die daadwerkelijk door schaduwkopieën zijn weggeschreven.' + [Environment]::NewLine +
+                 'Gereserveerd = ruimte die VSS al op de schijf heeft geclaimd. Deze is niet meer beschikbaar voor andere bestanden, maar nog niet volledig gevuld.' + [Environment]::NewLine +
+                 'Limiet = ingestelde bovengrens; het gebied groeit daar nooit overheen.'
+    noteVolume = 'Alleen het Windows-station {0} wordt gedekt. Andere partities en andere schijven blijven buiten beschouwing - ook als ze op dezelfde fysieke schijf staan. Ze worden niet vastgelegd en niet teruggezet bij een herstel, dus gegevens daar hebben nog steeds een eigen back-up nodig. De opslaglimiet hieronder geldt eveneens alleen voor {0}. De punten staan bovendien op precies de schijf die ze beschermen: een defecte schijf neemt ze mee. Point-in-time restore is het antwoord op een mislukte update of een slecht stuurprogramma, niet op hardwarestoring, diefstal of ransomware - het vervangt geen back-up.'
+
+    colTime    = 'Tijdstip'
+    colAge     = 'Leeftijd'
+    colStatus  = 'Status'
+    colBuild   = 'Build'
+    colDur     = 'Duur'
+    histHint   = 'Windows registreert niet hoelang een momentopname duurde zolang de Taakplanner-geschiedenis is uitgeschakeld. Deze registreert elke geplande taak op deze computer en dekt alleen uitvoeringen vanaf dat moment.'
+    btnHist    = 'Taakgeschiedenis inschakelen'
+    askHist    = 'Taakplanner-geschiedenis inschakelen? Dit is een systeembrede Windows-instelling: vanaf dan wordt elke geplande taak op deze computer vastgelegd in een ringbuffer van 10 MB. Bestaande herstelpunten krijgen nog steeds geen duur - alleen uitvoeringen vanaf nu.'
+    askHistT   = 'Taakgeschiedenis'
+    logHistOn  = 'Taakgeschiedenis ingeschakeld. Duur verschijnt vanaf de volgende uitvoering.'
+    logHistErr = 'Taakgeschiedenis kon niet worden ingeschakeld.'
+    askCopy    = 'Dit bestand staat op een netwerklocatie of verwisselbare schijf. De taak draait als SYSTEM en bereikt het netwerk als het computeraccount, niet als jij - daarom mislukt een opstartmomentopname vanaf een share meestal, ook al opent de share voor jou zonder problemen.{0}{0}Het bestand naar {1} kopiëren en de taak van daaruit registreren?{0}{0}Ja: kopiëren en het lokale bestand gebruiken. Nee: toch registreren met het huidige pad. Annuleren: niet registreren.'
+    askCopyT   = 'Opstartmomentopname'
+    logCopyOk  = 'Gekopieerd naar {0} - de taak gebruikt dat bestand.'
+    loading    = 'wordt gelezen...'
+    staleOld   = 'De opstarttaak voert nog steeds versie {0} uit {1} uit. Dit bestand is {2}.'
+    staleGone  = 'De opstarttaak wijst naar {0}, en dat bestand bestaat niet meer.'
+    btnAutoUpd = 'Kopie vernieuwen'
+    logAutoUpd = 'Kopie vernieuwd: {0} bevat nu versie {1}.'
+    stShadowOk = 'schaduwkopie aanwezig'
+    stRegOnly  = 'alleen registervermelding'
+    stUnknown  = 'onbekend (beheerdersrechten vereist)'
+
+    grpSet     = 'Instellingen'
+    capActive  = 'Functie ingeschakeld'
+    capFreq    = 'Frequentie - interval tussen herstelpunten'
+    capReten   = 'Bewaartermijn - levensduur van een herstelpunt'
+    capSize    = 'Maximale opslag voor alle herstelpunten'
+
+    optNoOver  = 'Windows-standaard (niet overschrijven)'
+    optOn      = 'Aan'
+    optOff     = 'Uit'
+    optStdFreq = 'Windows-standaard (24 uur)'
+    optStdRet  = 'Windows-standaard (3 dagen / 72 uur)'
+    unitHour   = 'uur'
+    unitHours  = 'uur'
+    unitDay    = 'dag'
+    unitDays   = 'dagen'
+    unitMin    = 'minuten'
+    unitMin1   = 'minuut'
+    unitMinShort = 'min'
+    unitHourShort = 'u.'
+
+    btnReset   = 'Alles resetten'
+    btnRefresh = 'Vernieuwen'
+    btnApply   = 'Toepassen'
+    btnApplyNow= 'Toepassen en nu uitvoeren'
+    btnSnapNow = 'Nu momentopname maken'
+    snapHint   = 'Maakt direct een herstelpunt aan, ongeacht het schema. De instellingen hieronder blijven onaangeroerd.'
+    tipSnapNow = 'Voert PITRTask één keer uit, ook terwijl de computer in gebruik is. Er wordt niets in de configuratie geschreven.'
+    chkAuto    = 'Bij elke systeemstart'
+    autoHint   = 'Windows vraagt bij het opstarten zelf om een punt, maar dat verzoek wacht tot het systeem inactief is - en een net opgestarte computer is allesbehalve dat. Dit forceert het.'
+    tipAuto    = 'Registreert een geplande taak die het gekozen aantal minuten na elke systeemstart een herstelpunt aanmaakt. Draait als SYSTEM, geen aanmelding nodig.'
+    logAutoOn  = 'Opstartmomentopname geregistreerd: {0} minuten na het opstarten.'
+    logAutoOff = 'Opstartmomentopname verwijderd.'
+    warnPath   = 'Dit bestand staat niet op een vaste lokale schijf. De taak onthoudt het pad en bereikt het bij het opstarten mogelijk niet.'
+    grpLog     = 'Logboek'
+
+    effective  = 'Momenteel actief'
+    source     = 'bron'
+    winDefault = 'Windows-standaard'
+    srcGPO     = 'beleid (dit hulpprogramma)'
+    srcCSP     = 'Intune/MDM'
+    srcUX      = 'app Instellingen'
+    sizeStd    = 'Windows-standaard (2% van de schijf)'
+
+    carryOver  = 'komt nog van de vorige instelling; wordt bij de volgende uitvoering aangepast naar'
+    proven72   = 'ouder dan 72 uur: de verlengde bewaartermijn werkt aantoonbaar'
+    unofficial = 'Niet-officiële aanpak: de hier geschreven configuratiewaarden zijn niet door Microsoft gedocumenteerd en kunnen wijzigen in toekomstige Windows-versies. „Alles resetten” herstelt op elk moment de Windows-standaard.'
+    taskMissing= 'PITRTask niet gevonden'
+    unknownTxt = 'onbekend'
+
+    logReady   = 'Gereed. Waarden worden op beleidsniveau geschreven en hebben voorrang op de app Instellingen.'
+    logNoAdmin = 'WAARSCHUWING: zonder beheerdersrechten kunnen geen waarden worden opgeslagen.'
+    logRefresh = 'Weergave vernieuwd.'
+    logSaved   = 'Opgeslagen. Wordt van kracht bij de volgende uitvoering van PITRTask (die loopt alleen bij inactiviteit).'
+    logCleared = 'overschrijving verwijderd -> Windows-standaard'
+    logIdleOff = 'Inactiviteitsvoorwaarde tijdelijk opgeheven.'
+    logStarted = 'PITRTask gestart, wachten op voltooiing...'
+    logIdleOn  = 'Inactiviteitsvoorwaarde hersteld.'
+    logIdleErr = 'Inactiviteitsvoorwaarde hersteld na een fout.'
+    logIdleBad = 'WAARSCHUWING: inactiviteitsvoorwaarde kon niet worden hersteld!'
+    logDone    = 'Klaar. Resultaat'
+    logNextRun = 'volgende uitvoering'
+    logTook    = 'duurde {0}'
+    logNoFinish= 'na {0} nog bezig - het punt wordt op de achtergrond afgerond.'
+    logRemoved = 'verwijderd'
+    logNothing = 'Er zijn geen waarden ingesteld.'
+    logError   = 'Fout'
+    askReset   = 'Alle door dit hulpprogramma ingestelde waarden verwijderen en terugkeren naar de Windows-standaard?'
+    askResetT  = 'Resetten'
+    capWinRE   = 'Herstelomgeving:'
+    winreOn    = 'beschikbaar'
+    winreOff   = 'uitgeschakeld'
+    winreUnk   = 'niet vast te stellen'
+    winreFree  = 'vrij'
+    noteWinRE  = 'Zonder herstelomgeving kan geen herstelpunt worden toegepast - het terugrollen gebeurt vandaaruit, niet binnen Windows. Een verhoogd "reagentc /enable" herstelt deze meestal.'
+    btnWinRE   = 'Opnieuw opstarten naar herstel'
+    tipWinRE   = 'Start Windows opnieuw op in de herstelomgeving, waar een herstelpunt kan worden toegepast. Niet-opgeslagen werk in andere programma''s gaat verloren.'
+    askWinRE   = 'Nu opnieuw opstarten in de herstelomgeving? Niet-opgeslagen werk in andere programma''s gaat verloren.'
+    askWinRET  = 'Opnieuw opstarten'
+    logWinRE   = 'Opnieuw opstarten naar de herstelomgeving...'
+    btnCopy    = 'Status kopiëren'
+    copyHint   = 'Kopieert editie, instellingen met bron, taakstatus en herstelpunten als tekst - voor een forumbericht of bugmelding.'
+    tipCopy    = 'Kopieert de huidige status als platte tekst naar het klembord: editie, instellingen met bron, taakstatus, herstelpunten en opslag. Bedoeld voor een forumbericht of bugmelding.'
+    logCopied  = 'Status naar klembord gekopieerd.'
 }
 
 # ------------------------------------------------------------------ French --
@@ -1327,10 +1484,324 @@ pl = @{
     logCopied  = 'Stan skopiowany do schowka.'
 }
 
+# ------------------------------------------------------------------ Czech --
+cs = @{
+    winTitle   = 'Point-in-time restore'
+    headline   = 'Point-in-time restore'
+    subtitle   = 'Obnovení k určitému okamžiku (PITR)'
+    intro      = 'Windows nabízí frekvenci a dobu uchování jen v edici Enterprise. Tento nástroj je zapisuje přímo do konfigurace mechanismu PITR, který edici nekontroluje.'
+    lnkGuide   = 'Návod'
+    tipProject = 'Otevře stránku projektu na GitHubu'
+    tipGuide   = 'Otevře krátký návod v prohlížeči'
+    updAvail   = 'Je dostupná verze {0} - otevřít stránku vydání'
+    tipUpdate  = 'Otevře stránku pro stažení v prohlížeči. Nic se automaticky nestahuje ani neinstaluje.'
+
+    grpState   = 'Aktuální stav'
+    capEdition = 'Edice Windows:'
+    capLast    = 'Poslední spuštění:'
+    capNext    = 'Příští spuštění:'
+    capDelta   = 'Naplánovaný interval:'
+    capTaskSt  = 'Stav úlohy:'
+    tsReady    = 'připraveno'
+    tsQueued   = 'čeká na nečinnost systému'
+    tsRunning  = 'právě běží'
+    tsDisabled = 'zakázáno'
+    tsOverdue  = 'zpožděno o'
+    missedRuns = 'vynechaná spuštění: {0}'
+    btnIdleChk = 'Zkontrolovat nečinnost'
+    idlePartial = ' Zjištěno bez oprávnění správce, zahrnuty jsou tedy jen úlohy viditelné pro tento účet.'
+    idleBanner = '{0} spuštění bylo vynecháno. To je běžné, pokud se počítač právě používá - ale může to také znamenat, že Windows už vůbec nehlásí nečinnost.'
+    idleBlocked = 'Windows nehlásí nečinnost od {0}. Od té doby neproběhla ani jedna z dalších {1} úloh vázaných na nečinnost, takže to sahá daleko za snímky. Obvykle systém udržuje v bdělém stavu nějaký program nebo ovladač - "powercfg /requests" v příkazovém řádku se zvýšenými oprávněními jej pojmenuje.'
+    idleFine   = 'Detekce nečinnosti funguje: {0} z dalších {1} úloh vázaných na nečinnost proběhlo od spuštění systému, naposledy v {2}. Počítač byl v naplánovaných okamžicích prostě používán.'
+    idleEarly  = 'Žádná z dalších {0} úloh vázaných na nečinnost ještě neproběhla, systém ale běží teprve od {1} - na závěr příliš krátce. Stojí za to zkontrolovat později znovu.'
+    idleChecking = 'čtou se ostatní úlohy vázané na nečinnost ...'
+    logIdleChk = 'Kontrola nečinnosti: {0}'
+    staleSame  = 'Úloha při spuštění systému spouští jinou sestavu téže verze {0} z {1}.'
+    noteIdle   = 'Body obnovení vznikají jen tehdy, když je systém nečinný. Pokud se počítač právě používá nebo je vypnutý, spuštění se odloží - naplánovaný termín tak může zcela propadnout. Nastavená frekvence je proto nejdřívější možný interval, ne záruka. Tlačítko "Vytvořit snímek nyní" nahoře umožňuje bod vynutit kdykoli.'
+
+    grpPoints  = 'Body obnovení'
+    lblCount   = 'Počet'
+    lblOldest  = 'Nejstarší bod'
+    lblStorage = 'Úložiště na disku'
+    stUsed     = 'využito'
+    stAlloc    = 'vyhrazeno'
+    stMax      = 'limit'
+    stNoAdmin  = 'nedostupné (vyžaduje oprávnění správce)'
+    noteStore  = 'Windows uvádí obsazené místo jen za celý disk, nikdy za jednotlivý bod - všechny body sdílejí jednu společnou rozdílovou oblast.'
+    tipStore   = 'Využito = data skutečně zapsaná stínovými kopiemi.' + [Environment]::NewLine +
+                 'Vyhrazeno = místo, které si VSS na disku již zabral. Ostatním souborům už není k dispozici, ale ještě není zcela zaplněno.' + [Environment]::NewLine +
+                 'Limit = nastavený strop; oblast přes něj nikdy nenaroste.'
+    noteVolume = 'Zahrnut je výhradně disk Windows {0}. Ostatní oddíly a další disky jsou mimo, i když leží na stejném fyzickém disku. Nejsou zachyceny ani vráceny zpět při obnovení, takže data na nich stále potřebují vlastní zálohu. Limit úložiště níže se rovněž vztahuje jen na {0}. Body navíc leží přímo na disku, který chrání: vadný disk je vezme s sebou. Point-in-time restore je odpovědí na nepovedenou aktualizaci nebo vadný ovladač, ne na selhání hardwaru, krádež nebo ransomware - zálohu nenahrazuje.'
+
+    colTime    = 'Čas'
+    colAge     = 'Stáří'
+    colStatus  = 'Stav'
+    colBuild   = 'Sestavení'
+    colDur     = 'Doba trvání'
+    histHint   = 'Windows nezaznamenává, jak dlouho snímek trval, dokud je historie Plánovače úloh vypnutá. Zaznamenává každou naplánovanou úlohu na tomto počítači a zahrnuje jen spuštění od zapnutí.'
+    btnHist    = 'Zapnout historii úloh'
+    askHist    = 'Zapnout historii Plánovače úloh? Jde o nastavení platné pro celý systém: od této chvíle se každá naplánovaná úloha na tomto počítači zaznamenává do 10MB kruhového vyrovnávacího bufferu. Stávající body obnovení stále nezískají dobu trvání - jen spuštění od nynějška.'
+    askHistT   = 'Historie úloh'
+    logHistOn  = 'Historie úloh zapnuta. Doba trvání se objeví od příštího spuštění.'
+    logHistErr = 'Historii úloh se nepodařilo zapnout.'
+    askCopy    = 'Tento soubor leží na síťovém sdílení nebo na vyměnitelném disku. Úloha běží jako SYSTEM a k síti přistupuje jako účet počítače, ne jako ty - proto počáteční snímek ze sdílené složky obvykle selže, i když se sdílení pro tebe otevírá bez problémů.{0}{0}Zkopírovat soubor do {1} a zaregistrovat úlohu odtud?{0}{0}Ano: zkopírovat a použít místní soubor. Ne: přesto zaregistrovat s aktuální cestou. Storno: neregistrovat.'
+    askCopyT   = 'Snímek při spuštění'
+    logCopyOk  = 'Zkopírováno do {0} - úloha používá tento soubor.'
+    loading    = 'čte se...'
+    staleOld   = 'Úloha při spuštění stále spouští verzi {0} z {1}. Tato zde je {2}.'
+    staleGone  = 'Úloha při spuštění ukazuje na {0}, a ten soubor už neexistuje.'
+    btnAutoUpd = 'Obnovit kopii'
+    logAutoUpd = 'Kopie obnovena: {0} nyní obsahuje verzi {1}.'
+    stShadowOk = 'stínová kopie existuje'
+    stRegOnly  = 'jen záznam v registru'
+    stUnknown  = 'neznámé (vyžaduje oprávnění správce)'
+
+    grpSet     = 'Nastavení'
+    capActive  = 'Funkce zapnuta'
+    capFreq    = 'Frekvence - interval mezi body obnovení'
+    capReten   = 'Doba uchování - životnost bodu obnovení'
+    capSize    = 'Maximální úložiště pro všechny body obnovení'
+
+    optNoOver  = 'Výchozí hodnota Windows (nepřepisovat)'
+    optOn      = 'Zapnuto'
+    optOff     = 'Vypnuto'
+    optStdFreq = 'Výchozí hodnota Windows (24 hodin)'
+    optStdRet  = 'Výchozí hodnota Windows (3 dny / 72 hodin)'
+    unitHour   = 'hodina'
+    unitHours  = 'hodin'
+    unitDay    = 'den'
+    unitDays   = 'dní'
+    unitMin    = 'minut'
+    unitMin1   = 'minuta'
+    unitMinShort = 'min'
+    unitHourShort = 'h'
+
+    btnReset   = 'Resetovat vše'
+    btnRefresh = 'Obnovit'
+    btnApply   = 'Použít'
+    btnApplyNow= 'Použít a spustit nyní'
+    btnSnapNow = 'Vytvořit snímek nyní'
+    snapHint   = 'Ihned vytvoří bod obnovení bez ohledu na plán. Nastavení níže zůstává nedotčené.'
+    tipSnapNow = 'Jednou spustí PITRTask, i když se počítač právě používá. Do konfigurace se nic nezapisuje.'
+    chkAuto    = 'Při každém spuštění systému'
+    autoHint   = 'Windows si při spuštění sám vyžádá bod, ale tento požadavek čeká na nečinnost systému - a právě spuštěný počítač je čímkoli, jen ne nečinný. Toto to vynutí.'
+    tipAuto    = 'Zaregistruje naplánovanou úlohu, která vytvoří bod obnovení zvolený počet minut po každém spuštění systému. Běží jako SYSTEM, přihlášení není potřeba.'
+    logAutoOn  = 'Snímek při spuštění zaregistrován: {0} minut po startu.'
+    logAutoOff = 'Snímek při spuštění odstraněn.'
+    warnPath   = 'Tento soubor neleží na pevném místním disku. Úloha si pamatuje jeho cestu a při startu se k němu nemusí dostat.'
+    grpLog     = 'Protokol'
+
+    effective  = 'Aktuálně platné'
+    source     = 'zdroj'
+    winDefault = 'Výchozí hodnota Windows'
+    srcGPO     = 'zásada (tento nástroj)'
+    srcCSP     = 'Intune/MDM'
+    srcUX      = 'aplikace Nastavení'
+    sizeStd    = 'Výchozí hodnota Windows (2 % disku)'
+
+    carryOver  = 'stále pochází z předchozího nastavení; při příštím spuštění bude upraveno na'
+    proven72   = 'starší než 72 hodin: prodloužená doba uchování prokazatelně funguje'
+    unofficial = 'Neoficiální postup: zde zapsané konfigurační hodnoty nejsou dokumentované společností Microsoft a mohou se v budoucích verzích Windows změnit. „Resetovat vše“ kdykoli obnoví výchozí hodnotu Windows.'
+    taskMissing= 'Úloha PITRTask nenalezena'
+    unknownTxt = 'neznámé'
+
+    logReady   = 'Připraveno. Hodnoty se zapisují na úrovni zásad a mají přednost před aplikací Nastavení.'
+    logNoAdmin = 'UPOZORNĚNÍ: bez oprávnění správce nelze uložit žádné hodnoty.'
+    logRefresh = 'Zobrazení obnoveno.'
+    logSaved   = 'Uloženo. Projeví se při příštím spuštění PITRTask (to běží jen při nečinnosti systému).'
+    logCleared = 'přepsání odstraněno -> výchozí hodnota Windows'
+    logIdleOff = 'Podmínka nečinnosti dočasně zrušena.'
+    logStarted = 'PITRTask spuštěn, čeká se na dokončení...'
+    logIdleOn  = 'Podmínka nečinnosti obnovena.'
+    logIdleErr = 'Podmínka nečinnosti obnovena po chybě.'
+    logIdleBad = 'UPOZORNĚNÍ: podmínku nečinnosti se nepodařilo obnovit!'
+    logDone    = 'Hotovo. Výsledek'
+    logNextRun = 'příští spuštění'
+    logTook    = 'trvalo {0}'
+    logNoFinish= 'po {0} stále běží - bod se dokončuje na pozadí.'
+    logRemoved = 'odstraněno'
+    logNothing = 'Nebyly nastaveny žádné hodnoty.'
+    logError   = 'Chyba'
+    askReset   = 'Odstranit všechny hodnoty nastavené tímto nástrojem a vrátit se k výchozí hodnotě Windows?'
+    askResetT  = 'Reset'
+    capWinRE   = 'Prostředí pro obnovení:'
+    winreOn    = 'dostupné'
+    winreOff   = 'vypnuté'
+    winreUnk   = 'nelze určit'
+    winreFree  = 'volné'
+    noteWinRE  = 'Bez prostředí pro obnovení nelze žádný bod obnovení použít - vrácení zpět probíhá odtud, ne z Windows. Příkaz "reagentc /enable" se zvýšenými oprávněními jej obvykle obnoví.'
+    btnWinRE   = 'Restartovat do obnovení'
+    tipWinRE   = 'Restartuje Windows do prostředí pro obnovení, kde lze bod obnovení použít. Neuložená práce v jiných programech se ztratí.'
+    askWinRE   = 'Restartovat nyní do prostředí pro obnovení? Neuložená práce v jiných programech se ztratí.'
+    askWinRET  = 'Restartovat'
+    logWinRE   = 'Restartuje se do prostředí pro obnovení...'
+    btnCopy    = 'Kopírovat stav'
+    copyHint   = 'Zkopíruje edici, nastavení se zdrojem, stav úlohy a body obnovení jako text - pro příspěvek na fóru nebo hlášení chyby.'
+    tipCopy    = 'Zkopíruje aktuální stav do schránky jako prostý text: edice, nastavení se zdrojem, stav úlohy, body obnovení a úložiště. Určeno pro příspěvek na fóru nebo hlášení chyby.'
+    logCopied  = 'Stav zkopírován do schránky.'
+}
+
+# ---------------------------------------------------------------- Ukrainian --
+uk = @{
+    winTitle   = 'Point-in-time restore'
+    headline   = 'Point-in-time restore'
+    subtitle   = 'Відновлення на момент часу (PITR)'
+    intro      = 'Windows пропонує частоту та термін зберігання лише в редакції Enterprise. Цей інструмент записує їх безпосередньо в конфігурацію рушія PITR, який не перевіряє редакцію.'
+    lnkGuide   = 'Посібник'
+    tipProject = 'Відкрити сторінку проєкту на GitHub'
+    tipGuide   = 'Відкрити короткий посібник у браузері'
+    updAvail   = 'Доступна версія {0} - відкрити сторінку релізу'
+    tipUpdate  = 'Відкриває сторінку завантаження в браузері. Нічого не завантажується та не встановлюється автоматично.'
+
+    grpState   = 'Поточний стан'
+    capEdition = 'Редакція Windows:'
+    capLast    = 'Останній запуск:'
+    capNext    = 'Наступний запуск:'
+    capDelta   = 'Запланований інтервал:'
+    capTaskSt  = 'Стан завдання:'
+    tsReady    = 'готово'
+    tsQueued   = 'очікує на бездіяльність системи'
+    tsRunning  = 'виконується зараз'
+    tsDisabled = 'вимкнено'
+    tsOverdue  = 'прострочено на'
+    missedRuns = 'пропущено запусків: {0}'
+    btnIdleChk = 'Перевірити бездіяльність'
+    idlePartial = ' Підраховано без прав адміністратора, тому враховані лише завдання, видимі для цього облікового запису.'
+    idleBanner = '{0} запусків пропущено. Це нормально, поки комп''ютер використовується, - але може також означати, що Windows більше взагалі не повідомляє про стан бездіяльності.'
+    idleBlocked = 'Windows не повідомляє про бездіяльність з {0}. Відтоді жодне з інших {1} завдань, прив''язаних до бездіяльності, не виконувалося, тож це стосується набагато більшого, ніж знімки. Зазвичай систему не дає заснути якась програма чи драйвер - команда "powercfg /requests" у командному рядку з підвищеними правами назве її.'
+    idleFine   = 'Виявлення бездіяльності працює: {0} з {1} інших завдань, прив''язаних до бездіяльності, виконалися після запуску системи, останнє - о {2}. Комп''ютер просто був у використанні в заплановані моменти.'
+    idleEarly  = 'Жодне з {0} інших завдань, прив''язаних до бездіяльності, ще не виконувалося, але система працює лише з {1} - це занадто мало, щоб робити висновки. Варто перевірити пізніше ще раз.'
+    idleChecking = 'зчитування інших завдань, прив''язаних до бездіяльності ...'
+    logIdleChk = 'Перевірка бездіяльності: {0}'
+    staleSame  = 'Завдання запуску виконує іншу збірку тієї самої версії {0} з {1}.'
+    noteIdle   = 'Точки відновлення створюються, лише поки система бездіяльна. Якщо комп''ютер використовується або вимкнений, запуск відкладається - і запланований момент може взагалі пропасти. Тому налаштована частота - це найшвидший можливий інтервал, а не гарантія. Кнопка «Створити знімок зараз» вгорі дає змогу примусово створити точку в будь-який момент.'
+
+    grpPoints  = 'Точки відновлення'
+    lblCount   = 'Кількість'
+    lblOldest  = 'Найстаріша точка'
+    lblStorage = 'Місце на диску'
+    stUsed     = 'використано'
+    stAlloc    = 'зарезервовано'
+    stMax      = 'ліміт'
+    stNoAdmin  = 'недоступно (потрібні права адміністратора)'
+    noteStore  = 'Windows показує використане місце лише для всього диска, ніколи для окремої точки - усі точки використовують спільну область різниці.'
+    tipStore   = 'Використано = дані, справді записані тіньовими копіями.' + [Environment]::NewLine +
+                 'Зарезервовано = місце, яке VSS уже зайняла на диску. Воно більше недоступне іншим файлам, але ще не заповнене повністю.' + [Environment]::NewLine +
+                 'Ліміт = налаштована верхня межа; область ніколи не зростає понад неї.'
+    noteVolume = 'Охоплюється лише диск Windows {0}. Інші розділи та інші диски залишаються поза увагою - навіть якщо вони на тому самому фізичному диску. Їх не фіксують і не відкочують під час відновлення, тож дані там і надалі потребують окремої резервної копії. Ліміт місця нижче також стосується лише {0}. До того ж точки лежать саме на тому диску, який вони захищають: несправний диск забере їх із собою. Point-in-time restore - це відповідь на невдале оновлення чи поганий драйвер, а не на апаратну несправність, крадіжку чи програму-вимагача - резервну копію вона не замінює.'
+
+    colTime    = 'Час'
+    colAge     = 'Вік'
+    colStatus  = 'Стан'
+    colBuild   = 'Збірка'
+    colDur     = 'Тривалість'
+    histHint   = 'Windows не записує, скільки тривав знімок, поки журнал Планувальника завдань вимкнено. Він реєструє кожне заплановане завдання на цьому комп''ютері й охоплює лише запуски від моменту ввімкнення.'
+    btnHist    = 'Увімкнути журнал завдань'
+    askHist    = 'Увімкнути журнал Планувальника завдань? Це загальносистемне налаштування Windows: відтепер кожне заплановане завдання на цьому комп''ютері записується в кільцевий буфер на 10 МБ. Наявні точки відновлення тривалості так і не отримають - лише запуски від зараз.'
+    askHistT   = 'Журнал завдань'
+    logHistOn  = 'Журнал завдань увімкнено. Тривалість з''явиться від наступного запуску.'
+    logHistErr = 'Не вдалося ввімкнути журнал завдань.'
+    askCopy    = 'Цей файл розташований на мережевому ресурсі або знімному диску. Завдання виконується від імені SYSTEM і виходить у мережу як обліковий запис комп''ютера, а не як ти, - тому початковий знімок із мережевого ресурсу зазвичай не вдається, навіть якщо ресурс відкривається для тебе без проблем.{0}{0}Скопіювати файл до {1} і зареєструвати завдання звідти?{0}{0}Так: скопіювати та використовувати локальний файл. Ні: усе одно зареєструвати з поточним шляхом. Скасувати: не реєструвати.'
+    askCopyT   = 'Знімок під час запуску'
+    logCopyOk  = 'Скопійовано до {0} - завдання використовує цей файл.'
+    loading    = 'зчитування...'
+    staleOld   = 'Завдання запуску й досі виконує версію {0} з {1}. Цей файл - {2}.'
+    staleGone  = 'Завдання запуску вказує на {0}, а цього файлу більше немає.'
+    btnAutoUpd = 'Оновити копію'
+    logAutoUpd = 'Копію оновлено: {0} тепер містить версію {1}.'
+    stShadowOk = 'тіньова копія наявна'
+    stRegOnly  = 'лише запис у реєстрі'
+    stUnknown  = 'невідомо (потрібні права адміністратора)'
+
+    grpSet     = 'Налаштування'
+    capActive  = 'Функцію ввімкнено'
+    capFreq    = 'Частота - інтервал між точками відновлення'
+    capReten   = 'Термін зберігання - тривалість життя точки відновлення'
+    capSize    = 'Максимальний обсяг для всіх точок відновлення'
+
+    optNoOver  = 'Типове значення Windows (не перевизначати)'
+    optOn      = 'Увімкнено'
+    optOff     = 'Вимкнено'
+    optStdFreq = 'Типове значення Windows (24 години)'
+    optStdRet  = 'Типове значення Windows (3 дні / 72 години)'
+    unitHour   = 'година'
+    unitHours  = 'годин'
+    unitDay    = 'день'
+    unitDays   = 'днів'
+    unitMin    = 'хвилин'
+    unitMin1   = 'хвилина'
+    unitMinShort = 'хв'
+    unitHourShort = 'год'
+
+    btnReset   = 'Скинути все'
+    btnRefresh = 'Оновити'
+    btnApply   = 'Застосувати'
+    btnApplyNow= 'Застосувати й запустити зараз'
+    btnSnapNow = 'Створити знімок зараз'
+    snapHint   = 'Одразу створює точку відновлення, незалежно від розкладу. Налаштування нижче залишаються без змін.'
+    tipSnapNow = 'Один раз запускає PITRTask, навіть поки комп''ютер використовується. У конфігурацію нічого не записується.'
+    chkAuto    = 'При кожному запуску системи'
+    autoHint   = 'Windows сам запитує точку під час запуску, але цей запит чекає на бездіяльність системи - а щойно запущений комп''ютер аж ніяк не бездіяльний. Це змушує його спрацювати.'
+    tipAuto    = 'Реєструє заплановане завдання, яке створює точку відновлення через вибрану кількість хвилин після кожного запуску системи. Виконується від імені SYSTEM, вхід у систему не потрібен.'
+    logAutoOn  = 'Знімок під час запуску зареєстровано: через {0} хв після завантаження.'
+    logAutoOff = 'Знімок під час запуску видалено.'
+    warnPath   = 'Цей файл не на постійному локальному диску. Завдання запам''ятовує його шлях і може не дістати до нього під час запуску.'
+    grpLog     = 'Журнал'
+
+    effective  = 'Зараз діє'
+    source     = 'джерело'
+    winDefault = 'Типове значення Windows'
+    srcGPO     = 'політика (цей інструмент)'
+    srcCSP     = 'Intune/MDM'
+    srcUX      = 'застосунок "Параметри"'
+    sizeStd    = 'Типове значення Windows (2% диска)'
+
+    carryOver  = 'все ще походить від попереднього налаштування; при наступному запуску буде змінено на'
+    proven72   = 'старіші за 72 години: подовжений термін зберігання доведено працює'
+    unofficial = 'Неофіційний підхід: записані тут значення конфігурації не задокументовані Microsoft і можуть змінитися в майбутніх версіях Windows. «Скинути все» будь-коли відновлює типове значення Windows.'
+    taskMissing= 'Завдання PITRTask не знайдено'
+    unknownTxt = 'невідомо'
+
+    logReady   = 'Готово. Значення записуються на рівні політики й мають пріоритет над застосунком "Параметри".'
+    logNoAdmin = 'ПОПЕРЕДЖЕННЯ: без прав адміністратора жодні значення зберегти не можна.'
+    logRefresh = 'Перегляд оновлено.'
+    logSaved   = 'Збережено. Набуде чинності під час наступного запуску PITRTask (він виконується лише в стані бездіяльності).'
+    logCleared = 'перевизначення видалено -> типове значення Windows'
+    logIdleOff = 'Умову бездіяльності тимчасово знято.'
+    logStarted = 'PITRTask запущено, очікування завершення...'
+    logIdleOn  = 'Умову бездіяльності відновлено.'
+    logIdleErr = 'Умову бездіяльності відновлено після помилки.'
+    logIdleBad = 'ПОПЕРЕДЖЕННЯ: не вдалося відновити умову бездіяльності!'
+    logDone    = 'Готово. Результат'
+    logNextRun = 'наступний запуск'
+    logTook    = 'тривало {0}'
+    logNoFinish= 'усе ще виконується після {0} - точка завершується у фоновому режимі.'
+    logRemoved = 'видалено'
+    logNothing = 'Жодних значень не було встановлено.'
+    logError   = 'Помилка'
+    askReset   = 'Видалити всі значення, встановлені цим інструментом, і повернутися до типового значення Windows?'
+    askResetT  = 'Скидання'
+    capWinRE   = 'Середовище відновлення:'
+    winreOn    = 'доступне'
+    winreOff   = 'вимкнене'
+    winreUnk   = 'неможливо визначити'
+    winreFree  = 'вільне'
+    noteWinRE  = 'Без середовища відновлення жодну точку відновлення застосувати не можна - відкат виконується звідти, а не з Windows. Команда "reagentc /enable" з підвищеними правами зазвичай його повертає.'
+    btnWinRE   = 'Перезавантажити у відновлення'
+    tipWinRE   = 'Перезавантажує Windows у середовище відновлення, де можна застосувати точку відновлення. Незбережена робота в інших програмах буде втрачена.'
+    askWinRE   = 'Перезавантажити зараз у середовище відновлення? Незбережена робота в інших програмах буде втрачена.'
+    askWinRET  = 'Перезавантаження'
+    logWinRE   = 'Перезавантаження в середовище відновлення...'
+    btnCopy    = 'Копіювати стан'
+    copyHint   = 'Копіює редакцію, налаштування з джерелом, стан завдання та точки відновлення як текст - для допису на форумі чи звіту про помилку.'
+    tipCopy    = 'Копіює поточний стан у буфер обміну як звичайний текст: редакція, налаштування з джерелом, стан завдання, точки відновлення та обсяг місця. Створено для допису на форумі чи звіту про помилку.'
+    logCopied  = 'Стан скопійовано в буфер обміну.'
+}
+
 }
 
 # Order of the language buttons, and at the same time the list of supported codes.
-$LangCodes = @('en', 'de', 'fr', 'es', 'pt', 'it', 'pl')
+$LangCodes = @('en', 'de', 'nl', 'fr', 'es', 'pt', 'it', 'pl', 'uk', 'cs')
 
 # English steps in for anything a translation is missing, so a half-finished language
 # block degrades to a mixed interface instead of empty labels.
@@ -1692,11 +2163,14 @@ $xaml = @'
                  VerticalAlignment="Top" Margin="12,2,0,0">
         <Button x:Name="BtnLangEN" Tag="en" Content="EN" Width="38" Height="26" Margin="0,0,3,3"/>
         <Button x:Name="BtnLangDE" Tag="de" Content="DE" Width="38" Height="26" Margin="0,0,3,3"/>
+        <Button x:Name="BtnLangNL" Tag="nl" Content="NL" Width="38" Height="26" Margin="0,0,3,3"/>
         <Button x:Name="BtnLangFR" Tag="fr" Content="FR" Width="38" Height="26" Margin="0,0,3,3"/>
         <Button x:Name="BtnLangES" Tag="es" Content="ES" Width="38" Height="26" Margin="0,0,3,3"/>
         <Button x:Name="BtnLangPT" Tag="pt" Content="PT" Width="38" Height="26" Margin="0,0,3,3"/>
         <Button x:Name="BtnLangIT" Tag="it" Content="IT" Width="38" Height="26" Margin="0,0,3,3"/>
         <Button x:Name="BtnLangPL" Tag="pl" Content="PL" Width="38" Height="26" Margin="0,0,3,3"/>
+        <Button x:Name="BtnLangUK" Tag="uk" Content="UK" Width="38" Height="26" Margin="0,0,3,3"/>
+        <Button x:Name="BtnLangCS" Tag="cs" Content="CS" Width="38" Height="26" Margin="0,0,3,3"/>
       </WrapPanel>
     </Grid>
 
@@ -1842,11 +2316,63 @@ $xaml = @'
         <TextBlock x:Name="TxtStoreNote" Foreground="#666" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,6"/>
         <ListView x:Name="LstPoints" Height="118" BorderThickness="1" BorderBrush="#DDD"
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+          <!-- Ohne dies bleibt jede Zelle nur so breit wie ihr Inhalt und haengt links
+               in der Spalte - dann laeuft "Right" auf dem TextBlock ins Leere, weil es
+               keinen Platz gibt, in den hinein ausgerichtet werden koennte. -->
+          <ListView.ItemContainerStyle>
+            <Style TargetType="ListViewItem">
+              <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            </Style>
+          </ListView.ItemContainerStyle>
           <ListView.View>
             <GridView>
               <GridViewColumn Width="172" DisplayMemberBinding="{Binding Zeitpunkt}"/>
-              <GridViewColumn Width="90"  DisplayMemberBinding="{Binding Alter}"/>
-              <GridViewColumn Width="90"  DisplayMemberBinding="{Binding Dauer}"/>
+              <!-- Alter und Dauer sind Zahlenwerte, deshalb rechtsbuendig - Kopf und
+                   Zelle gleichermassen, sonst wirkt die Spalte schief. Der eigentliche
+                   Grund, warum HorizontalContentAlignment allein nicht reichte: Der
+                   Standard-Spaltenkopf reserviert rechts unsichtbaren Platz fuer den
+                   Ziehgriff zum Verbreitern der Spalte, und Padding erreicht diesen
+                   Platz nicht - das Template ersetzt ihn komplett dagegen. -->
+              <GridViewColumn Width="90">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="GridViewColumnHeader">
+                    <Setter Property="Template">
+                      <Setter.Value>
+                        <ControlTemplate TargetType="GridViewColumnHeader">
+                          <Border BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="0,2,12,2">
+                            <ContentPresenter HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                          </Border>
+                        </ControlTemplate>
+                      </Setter.Value>
+                    </Setter>
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Alter}" HorizontalAlignment="Right" Margin="0,0,6,0"/>
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
+              <GridViewColumn Width="90">
+                <GridViewColumn.HeaderContainerStyle>
+                  <Style TargetType="GridViewColumnHeader">
+                    <Setter Property="Template">
+                      <Setter.Value>
+                        <ControlTemplate TargetType="GridViewColumnHeader">
+                          <Border BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="0,2,12,2">
+                            <ContentPresenter HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                          </Border>
+                        </ControlTemplate>
+                      </Setter.Value>
+                    </Setter>
+                  </Style>
+                </GridViewColumn.HeaderContainerStyle>
+                <GridViewColumn.CellTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Dauer}" HorizontalAlignment="Right" Margin="0,0,6,0"/>
+                  </DataTemplate>
+                </GridViewColumn.CellTemplate>
+              </GridViewColumn>
               <GridViewColumn Width="190" DisplayMemberBinding="{Binding Status}"/>
               <GridViewColumn Width="110" DisplayMemberBinding="{Binding Version}"/>
             </GridView>
@@ -1937,8 +2463,8 @@ $ctl = @{}
 foreach ($n in 'TxtHead','TxtSub','TxtIntro','TxtUnofficial',
                'LnkProject','LnkGuide','RunGuide',
                'TxtUpdate','LnkUpdate','RunUpdate',
-               'BtnLangEN','BtnLangDE','BtnLangFR','BtnLangES','BtnLangPT',
-               'BtnLangIT','BtnLangPL',
+               'BtnLangEN','BtnLangDE','BtnLangNL','BtnLangFR','BtnLangES','BtnLangPT',
+               'BtnLangIT','BtnLangPL','BtnLangUK','BtnLangCS',
                'BtnSnapNow','TxtSnapHint','ChkAuto','CmbAutoDelay','TxtAutoHint',
                'BoxStale','TxtStale','BtnAutoUpd',
                'GrpState','CapEdition','TxtEdition','CapLast','TxtLast','CapNext','TxtNext',
@@ -2369,16 +2895,24 @@ function Update-View {
 }
 
 # Die Auswahl wird bei jedem Sprachwechsel neu aufgebaut, deshalb merkt sie sich den
-# eingestellten Wert und setzt ihn danach wieder.
+# eingestellten Wert und setzt ihn danach wieder - stumm, wie bei Update-AutoRow. Das
+# muss auch Items.Clear() einschliessen: Sobald die Liste eine Auswahl hatte, setzt
+# Clear() sie auf keine Auswahl zurueck und loest damit selbst schon SelectionChanged
+# aus, bevor ueberhaupt neu ausgewaehlt wird. Ohne den Schutz um den ganzen Umbau
+# wuerde jeder Sprachwechsel ungefragt Apply-AutoStart anstossen und bei einer Datei
+# auf einer Freigabe den Kopier-Dialog erneut aufreissen - genau das war der Bug.
 function Build-DelayChoices {
     $keep = Get-SelectedTag $ctl.CmbAutoDelay
     if ($null -eq $keep) { $keep = 5 }
-    $ctl.CmbAutoDelay.Items.Clear()
-    foreach ($m in 1, 2, 5, 10, 15, 30) {
-        $u = if ($m -eq 1) { T 'unitMin1' } else { T 'unitMin' }
-        Add-Choice $ctl.CmbAutoDelay "$m $u" $m
-    }
-    Select-ByTag $ctl.CmbAutoDelay $keep
+    $script:AutoQuiet = $true
+    try {
+        $ctl.CmbAutoDelay.Items.Clear()
+        foreach ($m in 1, 2, 5, 10, 15, 30) {
+            $u = if ($m -eq 1) { T 'unitMin1' } else { T 'unitMin' }
+            Add-Choice $ctl.CmbAutoDelay "$m $u" $m
+        }
+        Select-ByTag $ctl.CmbAutoDelay $keep
+    } finally { $script:AutoQuiet = $false }
 }
 
 # Setzt Haken und Auswahl auf den tatsaechlichen Zustand der Aufgabe, ohne dabei das
@@ -2689,11 +3223,14 @@ function Set-Lang {
 # are more fragile than five plain lines.
 $ctl.BtnLangEN.Add_Click({ Set-Lang 'en' })
 $ctl.BtnLangDE.Add_Click({ Set-Lang 'de' })
+$ctl.BtnLangNL.Add_Click({ Set-Lang 'nl' })
 $ctl.BtnLangFR.Add_Click({ Set-Lang 'fr' })
 $ctl.BtnLangES.Add_Click({ Set-Lang 'es' })
 $ctl.BtnLangPT.Add_Click({ Set-Lang 'pt' })
 $ctl.BtnLangIT.Add_Click({ Set-Lang 'it' })
 $ctl.BtnLangPL.Add_Click({ Set-Lang 'pl' })
+$ctl.BtnLangUK.Add_Click({ Set-Lang 'uk' })
+$ctl.BtnLangCS.Add_Click({ Set-Lang 'cs' })
 
 $ctl.LnkProject.Add_Click({
     try { Start-Process $ProjectUrl }

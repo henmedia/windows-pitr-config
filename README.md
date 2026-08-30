@@ -55,14 +55,14 @@ dependencies, no PowerShell modules. Copy it to a USB stick and run it anywhere.
 > system awake. Also available as `pitr-config.cmd idle`, which runs without administrator
 > rights — elevated it simply sees more of the scheduled tasks, and says so when it does not.
 
-The interface speaks **English, German, French, Spanish, Portuguese, Italian and Polish**. It
-starts in whichever one matches your Windows display language; the buttons in the top right
+The interface speaks **English, German, Dutch, French, Spanish, Portuguese, Italian, Polish,
+Ukrainian and Czech**. It starts in whichever one matches your Windows display language; the buttons in the top right
 switch at any time. The window also links to the project and to the
 [short guide](https://henmedia.github.io/windows-pitr-config/guide.html), which opens in the
 language you are currently using.
 
 ![The tool running on Windows 11 Pro: current state, existing restore points, and the four
-settings](docs/screenshot.png?v=1.7.0a)
+settings](docs/screenshot.png?v=1.7.1)
 <!-- The ?v= is a cache buster. GitHub proxies README images and caches them by URL,
      so replacing the file alone keeps serving the old picture for a long time.
      Bump this whenever the screenshot is regenerated. -->
@@ -226,7 +226,7 @@ looks like a failure but is none: the tool works from its own full path and neve
 current directory. Since 1.4.1 that message is cleared from the console on start.
 
 A [short guide](https://henmedia.github.io/windows-pitr-config/guide.html) covers the same
-ground in all seven languages. Downloading `guide.html` next to `pitr-config.cmd` makes the
+ground in all ten languages. Downloading `guide.html` next to `pitr-config.cmd` makes the
 tool open that local copy instead, which keeps it fully usable on a stick without a network.
 
 Browsers treat `.cmd` files as executable content, so the download may need one confirmation
@@ -291,7 +291,7 @@ usually puts it back. **Restart to recovery** next to that line reboots straight
 environment, which is where a point gets applied after something has gone wrong.
 
 The state is read from `%SystemRoot%\System32\Recovery\ReAgent.xml` rather than from the
-output of `reagentc /info`, because that output is translated and this tool speaks seven
+output of `reagentc /info`, because that output is translated and this tool speaks ten
 languages. The partition behind it is found through the disk number and byte offset recorded
 in that same file. If any of it fails, the line says *not determinable* — no guess.
 
@@ -558,8 +558,8 @@ executes the lower part as a script block.
 
 ## Translations
 
-The interface speaks seven languages, and corrections are more welcome than new ones. German
-is the only one a native speaker has gone through line by line. The other six were not, so a
+The interface speaks ten languages, and corrections are more welcome than new ones. German
+is the only one a native speaker has gone through line by line. The other nine were not, so a
 clumsy phrase, or a term no Windows user in that language would recognise, is entirely
 possible. A pull request fixing a single line is worth as much here as a whole new
 language.
@@ -571,7 +571,7 @@ $LangText = @{
     en = @{ btnApply = 'Apply' ... }
     de = @{ btnApply = 'Übernehmen' ... }
 }
-$LangCodes = @('en', 'de', 'fr', 'es', 'pt', 'it', 'pl')
+$LangCodes = @('en', 'de', 'nl', 'fr', 'es', 'pt', 'it', 'pl', 'uk', 'cs')
 ```
 
 A new language needs four things: a block copied from `en` and translated, its code appended
@@ -609,6 +609,11 @@ language plus its button and an entry in the `CODES` array of the small script a
 Releases follow `MAJOR.MINOR.PATCH` and are tagged `vX.Y.Z`. The running version is shown in
 the window below the headline and printed by `pitr-config.cmd selftest`, so a bug report can
 always name the exact build. What changed between releases is in [CHANGELOG.md](CHANGELOG.md).
+
+A release that only adds a language, with no other change to the interface or its behaviour,
+bumps the patch version rather than the minor one — the same tier as a bug fix. The set of
+available languages is not a feature in the sense the minor version tracks; it is content, and
+treating it as such keeps a translation-only release from reading as bigger than it is.
 
 ## Support
 

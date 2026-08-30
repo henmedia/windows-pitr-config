@@ -33,6 +33,28 @@ dependencies, no PowerShell modules. Copy it to a USB stick and run it anywhere.
 > applied by anyone, and the tool says so in red instead of leaving it to be discovered on the
 > day it matters.
 
+> ### 📁 Or just one file, not the whole system
+>
+> Restore points aren’t only for rolling the whole drive back. Right-click any file or
+> folder, open **Properties**, and the **Previous Versions** tab lists every restore point that
+> captured it — **Open** shows the old content without touching anything, **Restore** brings
+> back only that one item. No recovery environment, no restart: this runs from inside a working
+> Windows, reading the same shadow copies the tool already creates.
+>
+> Windows has offered this for years, on every edition; what changes with more frequent restore
+> points is how far back the list reaches.
+
+> ### 🔍 And when no point appears at all
+>
+> A run that falls due while the machine is in use is dropped silently — Windows writes
+> nothing to any log, which is why a schedule that has quietly stopped working looks exactly
+> like one that is merely waiting. **Check idle** tells the two apart: it reads every other
+> scheduled task on the machine that waits for idle and compares them with the last boot. Has
+> none of them run in hours, the idle state is blocked system-wide and the missing restore
+> points are a symptom rather than the fault — `powercfg /requests` then names what holds the
+> system awake. Also available as `pitr-config.cmd idle`, which runs without administrator
+> rights — elevated it simply sees more of the scheduled tasks, and says so when it does not.
+
 The interface speaks **English, German, French, Spanish, Portuguese, Italian and Polish**. It
 starts in whichever one matches your Windows display language; the buttons in the top right
 switch at any time. The window also links to the project and to the
@@ -40,7 +62,7 @@ switch at any time. The window also links to the project and to the
 language you are currently using.
 
 ![The tool running on Windows 11 Pro: current state, existing restore points, and the four
-settings](docs/screenshot.png?v=1.6.0b)
+settings](docs/screenshot.png?v=1.7.0)
 <!-- The ?v= is a cache buster. GitHub proxies README images and caches them by URL,
      so replacing the file alone keeps serving the old picture for a long time.
      Bump this whenever the screenshot is regenerated. -->
@@ -125,7 +147,9 @@ that is by design: this is a rollback mechanism, not a backup mechanism. The two
 from a distance and fail in completely different ways.
 
 Treat it as the fast way back from a bad afternoon, and keep a real backup on separate media
-for everything else. The tool says the same thing in its own window.
+for everything else. That includes recovering a single file through Previous Versions: quick
+and convenient, but still the same shadow storage on the same drive. The tool says the same
+thing in its own window.
 
 ## How it works
 
@@ -309,7 +333,8 @@ Trigger:  MSFT_TaskBootTrigger   Delay = PT30M
 ```
 
 That trigger rarely produces anything, because the task also has `RunOnlyIfIdle = True` and a
-machine half an hour into its day is usually in use. The request goes to *Queued* and waits.
+machine half an hour into its day is usually in use. The run is then discarded rather than held
+back: it counts as a skipped run and leaves no entry in the Task Scheduler history at all.
 
 The checkbox does not add a second trigger and does not touch the Windows task. It registers a
 small task of its own, `\pitr-config\Startup snapshot`, which after the chosen delay does
@@ -377,6 +402,69 @@ the window are left where they are. **Apply and run now**, at the bottom, does t
 but saves the settings first — the right button when a new frequency should take effect at
 once instead of at the next scheduled run.
 
+### When no restore point appears at all
+
+Every restore point waits on one condition: the system has to be idle. `PITRTask` carries
+`RunOnlyIfIdle`, and a run that falls due while the machine is in use is not deferred — it is
+discarded there and then. Nothing is written to any log when that happens. The only trace is a
+counter, `NumberOfMissedRuns`, which the window shows beside the task status as *runs skipped*.
+
+That it is really discarded rather than held is measurable. With the idle wait left at its
+default of thirty minutes, the counter had already risen seven minutes after the trigger — long
+before that window could expire — and the task had still not run, although the machine had gone
+idle two minutes after the trigger and stayed that way. The Task Scheduler history stayed empty
+throughout. That silence is the reason a schedule which has quietly stopped working leaves
+nothing behind to find, and it is what the check below is for.
+
+A manual start behaves differently: an explicit `Start-ScheduledTask` on a task waiting for idle
+does land in the *Queued* state, which is why **Create snapshot now** lifts the condition for
+one run instead of merely starting the task.
+
+Skipped runs on their own mean nothing — they are the normal case while somebody is working.
+They turn into a symptom only when Windows stops reporting an idle state altogether, because a
+program or a driver holds a power request, say. From then on nothing that waits for idle runs
+at all; the restore points are merely the part somebody notices.
+
+The window tells those two apart. Once runs have been skipped, a box appears with a **Check
+idle** button. It reads every other task on this machine that carries `RunOnlyIfIdle` — disk
+cleanup, storage sense, memory diagnostics and two dozen more — and compares their last run
+with the last boot:
+
+- **at least one of them has run** — idle detection works, the machine was simply in use when
+  the run fell due;
+- **not one of them has run**, and the system has been up for more than two hours — the idle
+  state is blocked system-wide, and the missing restore points are a symptom, not the fault.
+
+The tool's own task stays out of that count on purpose: the green button can force it, and a
+forced run would carry a fresh timestamp that reverses the whole verdict.
+
+What holds a system awake is named by
+
+```
+powercfg /requests
+```
+
+in an elevated prompt. A stuck lock screen process, a media player, an open audio stream, a
+background app that never lets go — those are the usual candidates. Ending the process that
+holds the request releases it, and so does a restart.
+
+The same check runs without a window, and it only reads, so administrator rights are not
+required:
+
+```
+pitr-config.cmd idle
+```
+
+It returns **2** when the idle state is blocked and **0** otherwise, which makes it usable from
+a monitoring script.
+
+Rights do change the answer, though. An unelevated prompt sees only the scheduled tasks visible
+to that account — on the machine this was written on, 22 of 33. A positive verdict survives
+that: if something has run, idle detection works, whoever is counting. A verdict of *blocked*
+does not, because the tasks that did run may be among the ones that were not visible. Both the
+command and the window therefore state when they counted without rights, and the command adds a
+warning before returning 2.
+
 ### Command line
 
 For startup scripts, remote administration, or setting up several machines the same way, the
@@ -398,6 +486,19 @@ pitr-config.cmd apply freq=4h reten=5d size=20g active=on
 Every setting also accepts `default`, which removes that single override again. Hours, minutes
 and days can be written as `90m`, `4h` or `2d`; the size takes `20g` or a plain number of
 megabytes.
+
+Three further words do not write any setting and have a shape of their own:
+
+```
+pitr-config.cmd snapshot
+pitr-config.cmd autostart on delay=5m
+pitr-config.cmd idle
+```
+
+`snapshot` creates a restore point straight away and `autostart` also takes `off` and `status`;
+both need the same elevated prompt as `apply`. `idle` is the exception — it only reads, runs
+without administrator rights, and returns **2** instead of **0** when the idle state is blocked
+system-wide. Unelevated it counts fewer scheduled tasks and says so.
 
 It needs an elevated prompt and deliberately does **not** elevate itself: elevation would
 start a new process with its own console, and neither its output nor its exit code would reach

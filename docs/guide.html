@@ -120,6 +120,16 @@
   <p>That same line shows whether the environment is there at all. If it is switched off, no
      restore point can be applied by anyone, and the line turns red.</p>
 
+  <h2>Or just one file, not the whole system</h2>
+  <p>Restore points aren&rsquo;t only for rolling the whole drive back. Right-click any file or
+     folder, open <b>Properties</b>, and the <b>Previous Versions</b> tab lists every restore
+     point that captured it &mdash; <b>Open</b> shows the old content without touching
+     anything, <b>Restore</b> brings back only that one item. No recovery environment, no
+     restart: this runs from inside a working Windows, reading the same shadow copies the tool
+     already creates.</p>
+  <p>Windows has offered this for years, on every edition; what changes with more frequent
+     restore points is how far back the list reaches.</p>
+
   <h2>Getting started</h2>
   <p>Double-click <code>pitr-config.cmd</code>. It asks for administrator rights itself, then
      opens a window. Nothing is written until a button is pressed. The file can just as well
@@ -158,7 +168,8 @@
        only created while the system is idle. If the machine is in use, or switched off, the
        run is postponed and a slot can be skipped entirely. Setting one hour on a machine used
        all day will not produce twenty-four points. The window shows the task status, so a run
-       that is waiting stays visible.</p>
+       that is waiting stays visible. If points stop appearing altogether, <b>Check idle</b> further down says whether an idle
+       state is still being reported at all.</p>
     <p><b>Only the Windows drive is covered.</b> Other partitions and other disks are not
        included, not even on the same physical disk. Data there is neither protected nor
        rolled back, and still needs a backup of its own.</p>
@@ -175,6 +186,21 @@
        backup on separate media helps.</p>
   </div>
 
+  <h2>When no restore point appears</h2>
+  <p>A run only happens while the system is idle, so one falling due while the machine is in use
+     is dropped &mdash; silently, without a line in any log. The window counts those beside the
+     task status as <i>runs skipped</i>.</p>
+  <p>By themselves they mean nothing; they are the normal case while somebody is working. They
+     become a symptom only when Windows stops reporting an idle state at all. From then on
+     nothing that waits for idle runs any more &mdash; snapshots are merely the part you
+     notice.</p>
+  <p>Once runs have been skipped, a box with <b>Check idle</b> appears. It reads every other
+     scheduled task on this machine that waits for idle &mdash; disk cleanup, storage sense and
+     two dozen more &mdash; and compares them with the last boot. Has at least one of them run,
+     idle detection works and the machine was simply in use. Has none of them run while the
+     system has been up for hours, the idle state is blocked, usually by a program or a driver
+     holding a power request. An elevated <code>powercfg /requests</code> names it; ending that
+     process, or a restart, releases it.</p>
   <h2>Undoing everything</h2>
   <p><b>Reset everything</b> removes all of it in one step. Existing restore points are never
      deleted by this tool — it only changes configuration.</p>
@@ -224,6 +250,17 @@
   <p>Dieselbe Zeile zeigt, ob es diese Umgebung &uuml;berhaupt gibt. Ist sie abgeschaltet, kann
      niemand einen Wiederherstellungspunkt anwenden, und die Zeile wird rot.</p>
 
+  <h2>Oder nur eine Datei, nicht das ganze System</h2>
+  <p>Wiederherstellungspunkte sind nicht nur da, um das ganze Laufwerk zur&uuml;ckzudrehen.
+     Rechtsklick auf eine beliebige Datei oder einen Ordner, <b>Eigenschaften</b>, und die
+     Registerkarte <b>Vorg&auml;ngerversionen</b> listet jeden Wiederherstellungspunkt auf, der
+     sie erfasst hat &mdash; <b>&Ouml;ffnen</b> zeigt den alten Inhalt, ohne etwas zu
+     ver&auml;ndern, <b>Wiederherstellen</b> holt nur dieses eine Element zur&uuml;ck. Keine
+     Wiederherstellungsumgebung, kein Neustart: Das l&auml;uft aus dem laufenden Windows heraus,
+     mit denselben Schattenkopien, die das Werkzeug ohnehin anlegt.</p>
+  <p>Windows bietet das seit Jahren, auf jeder Edition; mit h&auml;ufigeren
+     Wiederherstellungspunkten w&auml;chst nur, wie weit die Liste zur&uuml;ckreicht.</p>
+
   <h2>Erste Schritte</h2>
   <p><code>pitr-config.cmd</code> doppelklicken. Die Datei fordert selbst Administratorrechte
      an und öffnet ein Fenster. Geschrieben wird erst beim Druck auf eine Schaltfläche. Die
@@ -265,7 +302,8 @@
        Rechner benutzt oder ist er ausgeschaltet, verschiebt sich der Lauf, und ein Termin
        kann ganz ausfallen. Wer eine Stunde einstellt und den Rechner den ganzen Tag benutzt,
        bekommt keine vierundzwanzig Punkte. Das Fenster zeigt den Status der Aufgabe an, damit
-       erkennbar ist, wann ein Lauf wartet.</p>
+       erkennbar ist, wann ein Lauf wartet. Bleiben Punkte ganz aus, sagt <b>Leerlauf prüfen</b> weiter unten, ob der Leerlauf
+       überhaupt noch gemeldet wird.</p>
     <p><b>Erfasst wird nur das Windows-Laufwerk.</b> Weitere Partitionen und weitere
        Festplatten sind nicht dabei — auch nicht auf derselben physischen Platte. Daten dort
        werden weder geschützt noch zurückgesetzt und brauchen weiterhin eine eigene
@@ -285,6 +323,22 @@
        Datentr&auml;ger.</p>
   </div>
 
+  <h2>Wenn gar kein Punkt mehr entsteht</h2>
+  <p>Ein Lauf findet nur im Leerlauf statt. Wird er fällig, während der Rechner benutzt wird,
+     fällt er aus &mdash; stillschweigend, ohne eine Zeile in irgendeinem Protokoll. Das Fenster
+     zählt diese Fälle neben dem Aufgabenstatus als <i>ausgefallene Läufe</i>.</p>
+  <p>Für sich genommen sagen sie nichts; sie sind der Normalfall, solange jemand am Rechner
+     sitzt. Zum Symptom werden sie erst, wenn Windows überhaupt keinen Leerlauf mehr meldet.
+     Dann läuft nichts mehr, was auf Leerlauf wartet &mdash; die Schnappschüsse sind nur das,
+     was zuerst auffällt.</p>
+  <p>Sobald Läufe ausgefallen sind, erscheint ein Kasten mit <b>Leerlauf prüfen</b>. Er liest
+     jede andere geplante Aufgabe dieses Rechners, die auf Leerlauf wartet &mdash;
+     Datenträgerbereinigung, Speicheroptimierung und zwei Dutzend weitere &mdash; und vergleicht
+     sie mit dem letzten Systemstart. Ist wenigstens eine gelaufen, arbeitet die
+     Leerlauferkennung, und der Rechner war nur in Benutzung. Ist keine gelaufen, während das
+     System seit Stunden läuft, ist der Leerlauf blockiert, meist durch ein Programm oder einen
+     Treiber, der eine Energieanforderung hält. <code>powercfg /requests</code> mit Rechten nennt
+     ihn; das Beenden dieses Prozesses oder ein Neustart gibt ihn frei.</p>
   <h2>Alles rückgängig machen</h2>
   <p><b>Alles zurücksetzen</b> entfernt sämtliche Werte in einem Schritt. Vorhandene
      Wiederherstellungspunkte löscht das Werkzeug nie — es ändert ausschließlich die
@@ -339,6 +393,19 @@
      d&eacute;sactiv&eacute;, personne ne peut appliquer de point de restauration, et la ligne
      passe au rouge.</p>
 
+  <h2>Ou juste un fichier, pas tout le syst&egrave;me</h2>
+  <p>Les points de restauration ne servent pas qu&rsquo;&agrave; revenir en arri&egrave;re sur
+     tout le disque. Clic droit sur un fichier ou un dossier, <b>Propri&eacute;t&eacute;s</b>,
+     et l&rsquo;onglet <b>Versions pr&eacute;c&eacute;dentes</b> r&eacute;pertorie chaque point
+     de restauration qui l&rsquo;a captur&eacute; &mdash; <b>Ouvrir</b> montre l&rsquo;ancien
+     contenu sans rien modifier, <b>Restaurer</b> ne ram&egrave;ne que cet &eacute;l&eacute;ment.
+     Pas d&rsquo;environnement de r&eacute;cup&eacute;ration, pas de red&eacute;marrage : cela
+     fonctionne depuis un Windows en cours d&rsquo;ex&eacute;cution, en lisant les m&ecirc;mes
+     clich&eacute;s instantan&eacute;s que l&rsquo;outil cr&eacute;e d&eacute;j&agrave;.</p>
+  <p>Windows propose cela depuis des ann&eacute;es, sur toutes les &eacute;ditions ; ce qui
+     change avec des points plus fr&eacute;quents, c&rsquo;est jusqu&rsquo;o&ugrave; la liste
+     remonte.</p>
+
   <h2>Premiers pas</h2>
   <p>Double-clic sur <code>pitr-config.cmd</code>. Le fichier demande lui-même les droits
      d'administrateur et ouvre une fenêtre. Rien n'est écrit tant qu'aucun bouton n'a été
@@ -380,7 +447,8 @@
        utilisée, ou si elle est éteinte, l'exécution est reportée et un créneau peut être
        ignoré. Régler une heure sur une machine utilisée toute la journée ne produira pas
        vingt-quatre points. La fenêtre affiche l'état de la tâche, ce qui rend visible une
-       exécution en attente.</p>
+       exécution en attente. Si plus aucun point n'apparaît, <b>Vérifier l'inactivité</b> plus bas indique si une
+       inactivité est encore signalée.</p>
     <p><b>Seul le lecteur Windows est pris en compte.</b> Les autres partitions et les autres
        disques sont exclus, même sur le même disque physique. Les données qui s'y trouvent ne
        sont ni protégées ni restaurées et ont toujours besoin de leur propre sauvegarde.</p>
@@ -400,6 +468,23 @@
        seule une sauvegarde sur un support s&eacute;par&eacute; aide.</p>
   </div>
 
+  <h2>Quand plus aucun point n'apparaît</h2>
+  <p>Une exécution n'a lieu que pendant l'inactivité. Celle qui arrive à échéance alors que la
+     machine est utilisée est abandonnée &mdash; en silence, sans une ligne dans le moindre
+     journal. La fenêtre les compte à côté de l'état de la tâche sous <i>exécutions
+     manquées</i>.</p>
+  <p>Prises isolément, elles ne signifient rien : c'est le cas normal tant que quelqu'un
+     travaille. Elles ne deviennent un symptôme que si Windows ne signale plus aucune
+     inactivité. Plus rien de ce qui l'attend ne s'exécute alors &mdash; les instantanés ne sont
+     que la partie visible.</p>
+  <p>Dès que des exécutions ont été manquées, un encadré <b>Vérifier l'inactivité</b> apparaît.
+     Il lit toutes les autres tâches planifiées de la machine qui attendent l'inactivité &mdash;
+     nettoyage de disque, assistant de stockage et une vingtaine d'autres &mdash; et les compare
+     au dernier démarrage. Si au moins une s'est exécutée, la détection fonctionne et la machine
+     était simplement utilisée. Si aucune ne s'est exécutée alors que le système tourne depuis
+     des heures, l'inactivité est bloquée, en général par un programme ou un pilote qui maintient
+     une requête d'alimentation. <code>powercfg /requests</code> avec droits d'administrateur le
+     nomme ; terminer ce processus, ou redémarrer, la libère.</p>
   <h2>Tout annuler</h2>
   <p><b>Tout réinitialiser</b> supprime l'ensemble en une seule étape. L'outil ne supprime
      jamais les points de restauration existants : il ne modifie que la configuration.</p>
@@ -451,6 +536,17 @@
   <p>Esa misma l&iacute;nea indica si el entorno existe siquiera. Si est&aacute; desactivado,
      nadie puede aplicar un punto de restauraci&oacute;n, y la l&iacute;nea se pone roja.</p>
 
+  <h2>O solo un archivo, no todo el sistema</h2>
+  <p>Los puntos de restauraci&oacute;n no sirven solo para retroceder todo el disco. Clic
+     derecho en cualquier archivo o carpeta, <b>Propiedades</b>, y la pesta&ntilde;a
+     <b>Versiones anteriores</b> enumera cada punto de restauraci&oacute;n que lo captur&oacute;
+     &mdash; <b>Abrir</b> muestra el contenido antiguo sin tocar nada, <b>Restaurar</b>
+     recupera solo ese elemento. Sin entorno de recuperaci&oacute;n, sin reiniciar: funciona
+     desde un Windows en marcha, leyendo las mismas instant&aacute;neas que la herramienta ya
+     crea.</p>
+  <p>Windows ofrece esto desde hace a&ntilde;os, en todas las ediciones; lo que cambia con
+     puntos m&aacute;s frecuentes es hasta d&oacute;nde llega la lista.</p>
+
   <h2>Primeros pasos</h2>
   <p>Doble clic en <code>pitr-config.cmd</code>. El archivo solicita por sí mismo permisos
      de administrador y abre una ventana. No se escribe nada hasta que se pulsa un botón. El
@@ -491,7 +587,8 @@
        solo se crean cuando el sistema está inactivo. Si está usando el equipo, o si está
        apagado, la ejecución se aplaza y una cita puede omitirse por completo. Configurar una
        hora en un equipo que se usa todo el día no producirá veinticuatro puntos. La ventana
-       muestra el estado de la tarea, de modo que una ejecución en espera queda a la vista.</p>
+       muestra el estado de la tarea, de modo que una ejecución en espera queda a la vista. Si dejan de aparecer puntos por completo, <b>Comprobar inactividad</b> más abajo indica
+       si todavía se informa de alguna inactividad.</p>
     <p><b>Solo se incluye la unidad de Windows.</b> Otras particiones y otros discos quedan
        fuera, incluso en el mismo disco físico. Los datos que haya allí no se protegen ni se
        revierten, y siguen necesitando su propia copia de seguridad.</p>
@@ -509,6 +606,21 @@
        solo ayuda una copia de seguridad en un medio aparte.</p>
   </div>
 
+  <h2>Cuando no aparece ningún punto</h2>
+  <p>Una ejecución solo ocurre durante la inactividad. La que vence mientras se usa el equipo se
+     descarta &mdash; en silencio, sin una línea en ningún registro. La ventana las cuenta junto
+     al estado de la tarea como <i>ejecuciones omitidas</i>.</p>
+  <p>Por sí solas no significan nada: son lo normal mientras alguien trabaja. Se convierten en
+     síntoma solo cuando Windows deja de informar de cualquier inactividad. Entonces ya no se
+     ejecuta nada que la espere; las instantáneas son solo la parte que se nota.</p>
+  <p>En cuanto se omiten ejecuciones aparece un recuadro con <b>Comprobar inactividad</b>. Lee
+     todas las demás tareas programadas del equipo que esperan inactividad &mdash; liberador de
+     espacio, sensor de almacenamiento y dos docenas más &mdash; y las compara con el último
+     arranque. Si al menos una se ejecutó, la detección funciona y el equipo simplemente estaba
+     en uso. Si no se ejecutó ninguna mientras el sistema lleva horas encendido, la inactividad
+     está bloqueada, normalmente por un programa o un controlador que mantiene una solicitud de
+     energía. <code>powercfg /requests</code> con permisos lo indica; cerrar ese proceso, o
+     reiniciar, la libera.</p>
   <h2>Deshacerlo todo</h2>
   <p><b>Restablecer todo</b> lo elimina en un solo paso. La herramienta nunca borra puntos de
      restauración existentes: solo cambia la configuración.</p>
@@ -560,6 +672,18 @@
   <p>Essa mesma linha mostra se o ambiente existe. Se estiver desativado, ningu&eacute;m
      consegue aplicar um ponto de restaura&ccedil;&atilde;o, e a linha fica vermelha.</p>
 
+  <h2>Ou s&oacute; um arquivo, n&atilde;o o sistema inteiro</h2>
+  <p>Os pontos de restaura&ccedil;&atilde;o n&atilde;o servem s&oacute; para voltar todo o
+     disco no tempo. Clique com o bot&atilde;o direito em qualquer arquivo ou pasta,
+     <b>Propriedades</b>, e a aba <b>Vers&otilde;es anteriores</b> lista cada ponto de
+     restaura&ccedil;&atilde;o que o capturou &mdash; <b>Abrir</b> mostra o conte&uacute;do
+     antigo sem alterar nada, <b>Restaurar</b> traz de volta s&oacute; aquele item. Sem
+     ambiente de recupera&ccedil;&atilde;o, sem reiniciar: funciona a partir de um Windows em
+     execu&ccedil;&atilde;o, lendo os mesmos instant&acirc;neos que a ferramenta j&aacute;
+     cria.</p>
+  <p>O Windows oferece isso h&aacute; anos, em todas as edi&ccedil;&otilde;es; o que muda com
+     pontos mais frequentes &eacute; at&eacute; onde a lista alcan&ccedil;a.</p>
+
   <h2>Primeiros passos</h2>
   <p>Duplo clique em <code>pitr-config.cmd</code>. O arquivo solicita por conta própria
      direitos de administrador e abre uma janela. Nada é gravado até que um botão seja
@@ -600,7 +724,8 @@
        são criados quando o sistema está ocioso. Se o computador estiver em uso, ou desligado,
        a execução é adiada e um horário pode ser pulado por completo. Configurar uma hora em um
        computador usado o dia inteiro não vai gerar vinte e quatro pontos. A janela mostra o
-       status da tarefa, de modo que uma execução aguardando fica visível.</p>
+       status da tarefa, de modo que uma execução aguardando fica visível. Se os pontos deixarem de aparecer por completo, <b>Verificar ociosidade</b> mais abaixo diz
+       se ainda é informada alguma ociosidade.</p>
     <p><b>Apenas a unidade do Windows é incluída.</b> Outras partições e outros discos ficam de
        fora, mesmo no mesmo disco físico. Os dados ali não são protegidos nem revertidos e
        continuam precisando do próprio backup.</p>
@@ -619,6 +744,21 @@
        ajuda um backup em m&iacute;dia separada.</p>
   </div>
 
+  <h2>Quando não aparece mais nenhum ponto</h2>
+  <p>Uma execução só acontece durante a ociosidade. A que vence enquanto o computador está em uso
+     é descartada &mdash; em silêncio, sem uma linha em nenhum registro. A janela as conta ao
+     lado do estado da tarefa como <i>execuções perdidas</i>.</p>
+  <p>Por si só não significam nada: são o caso normal enquanto alguém trabalha. Só viram sintoma
+     quando o Windows deixa de informar qualquer ociosidade. Aí nada que a aguarde é executado
+     &mdash; os instantâneos são apenas a parte que se percebe.</p>
+  <p>Assim que execuções são perdidas, aparece uma caixa com <b>Verificar ociosidade</b>. Ela lê
+     todas as outras tarefas agendadas da máquina que aguardam ociosidade &mdash; limpeza de
+     disco, sensor de armazenamento e mais duas dúzias &mdash; e as compara com a última
+     inicialização. Se ao menos uma foi executada, a detecção funciona e o computador apenas
+     estava em uso. Se nenhuma foi executada enquanto o sistema está ligado há horas, a
+     ociosidade está bloqueada, normalmente por um programa ou um driver que mantém uma
+     solicitação de energia. <code>powercfg /requests</code> com permissões o indica; encerrar
+     esse processo, ou reiniciar, a libera.</p>
   <h2>Desfazer tudo</h2>
   <p><b>Redefinir tudo</b> remove tudo em uma única etapa. A ferramenta nunca exclui pontos de
      restauração existentes — ela apenas altera a configuração.</p>
@@ -668,6 +808,17 @@
   <p>La stessa riga mostra se quell'ambiente esiste. Se &egrave; disattivato, nessuno pu&ograve;
      applicare un punto di ripristino, e la riga diventa rossa.</p>
 
+  <h2>O solo un file, non tutto il sistema</h2>
+  <p>I punti di ripristino non servono solo a riportare indietro l&rsquo;intero disco. Clic
+     destro su un file o una cartella qualsiasi, <b>Propriet&agrave;</b>, e la scheda
+     <b>Versioni precedenti</b> elenca ogni punto di ripristino che l&rsquo;ha catturato
+     &mdash; <b>Apri</b> mostra il vecchio contenuto senza toccare nulla, <b>Ripristina</b>
+     riporta indietro solo quell&rsquo;elemento. Nessun ambiente di ripristino, nessun
+     riavvio: funziona da un Windows in esecuzione, leggendo le stesse istantanee che lo
+     strumento crea gi&agrave;.</p>
+  <p>Windows offre questo da anni, su ogni edizione; ci&ograve; che cambia con punti pi&ugrave;
+     frequenti &egrave; quanto indietro arriva l&rsquo;elenco.</p>
+
   <h2>Primi passi</h2>
   <p>Doppio clic su <code>pitr-config.cmd</code>. Il file richiede da solo i diritti di
      amministratore e apre una finestra. Non viene scritto nulla finch&eacute; non si preme un
@@ -709,7 +860,8 @@
        &egrave; in uso, o spento, l'esecuzione viene rinviata e un appuntamento pu&ograve;
        saltare del tutto. Impostare un'ora su un computer usato tutto il giorno non
        produrr&agrave; ventiquattro punti. La finestra mostra lo stato dell'attivit&agrave;,
-       cos&igrave; un'esecuzione in attesa resta visibile.</p>
+       cos&igrave; un'esecuzione in attesa resta visibile. Se i punti smettono del tutto di comparire, <b>Verifica inattivit&agrave;</b> pi&ugrave; in
+       basso dice se un'inattivit&agrave; viene ancora segnalata.</p>
     <p><b>Viene protetta solo l'unit&agrave; di Windows.</b> Le altre partizioni e gli altri
        dischi non sono inclusi, nemmeno sullo stesso disco fisico. I dati che vi si trovano non
        sono n&eacute; protetti n&eacute; ripristinati e hanno ancora bisogno di un backup
@@ -728,6 +880,21 @@
        supporto separato.</p>
   </div>
 
+  <h2>Quando non compare più alcun punto</h2>
+  <p>Un'esecuzione avviene solo durante l'inattività. Quella che scade mentre il computer è in
+     uso viene scartata &mdash; in silenzio, senza una riga in alcun registro. La finestra le
+     conta accanto allo stato dell'attività come <i>esecuzioni saltate</i>.</p>
+  <p>Di per sé non significano nulla: sono la norma finché qualcuno lavora. Diventano un sintomo
+     solo quando Windows smette del tutto di segnalare inattività. Allora non viene più eseguito
+     nulla che la attenda &mdash; gli snapshot sono solo la parte che si nota.</p>
+  <p>Appena vengono saltate delle esecuzioni compare un riquadro con <b>Verifica inattività</b>.
+     Legge tutte le altre attività pianificate della macchina che attendono l'inattività &mdash;
+     pulizia disco, sensore memoria e altre due dozzine &mdash; e le confronta con l'ultimo
+     avvio. Se almeno una è stata eseguita, il rilevamento funziona e il computer era
+     semplicemente in uso. Se non ne è stata eseguita nessuna mentre il sistema è acceso da ore,
+     l'inattività è bloccata, di solito da un programma o un driver che mantiene una richiesta di
+     alimentazione. <code>powercfg /requests</code> con privilegi lo indica; terminare quel
+     processo, o riavviare, la libera.</p>
   <h2>Annullare tutto</h2>
   <p><b>Reimposta tutto</b> rimuove ogni cosa in un solo passaggio. I punti di ripristino
      esistenti non vengono mai eliminati dallo strumento: cambia soltanto la configurazione.</p>
@@ -781,6 +948,18 @@
      wy&#322;&#261;czone, nikt nie mo&#380;e zastosowa&#263; punktu przywracania, a wiersz
      staje si&#281; czerwony.</p>
 
+  <h2>Albo tylko jeden plik, nie ca&#322;y system</h2>
+  <p>Punkty przywracania nie s&#261; tylko do cofania ca&#322;ego dysku. Klik prawym przyciskiem
+     na dowolny plik lub folder, <b>W&#322;a&#347;ciwo&#347;ci</b>, a karta <b>Poprzednie
+     wersje</b> wypisuje ka&#380;dy punkt przywracania, kt&oacute;ry go uchwyci&#322; &mdash;
+     <b>Otw&oacute;rz</b> pokazuje star&#261; zawarto&#347;&#263; bez niczego zmieniaj&#261;c,
+     <b>Przywr&oacute;&#263;</b> przywraca tylko ten jeden element. &#379;adnego &#347;rodowiska
+     odzyskiwania, &#380;adnego ponownego uruchamiania &mdash; dzia&#322;a z poziomu
+     dzia&#322;aj&#261;cego Windows, czytaj&#261;c te same kopie w tle, kt&oacute;re
+     narz&#281;dzie ju&#380; tworzy.</p>
+  <p>Windows oferuje to od lat, na ka&#380;dej edycji; wraz z cz&#281;stszymi punktami
+     przywracania zmienia si&#281; tylko to, jak daleko wstecz si&#281;ga lista.</p>
+
   <h2>Pierwsze kroki</h2>
   <p>Podw&oacute;jne klikni&#281;cie pliku <code>pitr-config.cmd</code>. Plik sam prosi o
      uprawnienia administratora i otwiera okno. Nic nie zostaje zapisane, dop&oacute;ki nie
@@ -825,7 +1004,9 @@
        przesuni&#281;te, a termin mo&#380;e zosta&#263; pomini&#281;ty w ca&#322;o&#347;ci.
        Ustawienie jednej godziny na komputerze u&#380;ywanym przez ca&#322;y dzie&#324; nie da
        dwudziestu czterech punkt&oacute;w. Okno pokazuje stan zadania, wi&#281;c oczekuj&#261;ce
-       uruchomienie pozostaje widoczne.</p>
+       uruchomienie pozostaje widoczne. Je&#347;li punkty przestan&#261; si&#281; pojawia&#263; ca&#322;kowicie,
+       <b>Sprawd&#378; bezczynno&#347;&#263;</b> ni&#380;ej powie, czy bezczynno&#347;&#263;
+       jest jeszcze zg&#322;aszana.</p>
     <p><b>Obejmowany jest tylko dysk systemu Windows.</b> Pozosta&#322;e partycje i inne dyski
        nie s&#261; uwzgl&#281;dniane, nawet na tym samym dysku fizycznym. Dane na nich nie
        s&#261; ani chronione, ani przywracane i nadal wymagaj&#261; w&#322;asnej kopii
@@ -846,6 +1027,21 @@
        no&#347;niku.</p>
   </div>
 
+  <h2>Gdy nie pojawia się już żaden punkt</h2>
+  <p>Uruchomienie następuje tylko w czasie bezczynności. To, które wypada, gdy komputer jest
+     używany, zostaje pominięte &mdash; po cichu, bez wiersza w jakimkolwiek dzienniku. Okno
+     liczy je obok stanu zadania jako <i>pominięte uruchomienia</i>.</p>
+  <p>Same w sobie nic nie znaczą: to normalne, dopóki ktoś pracuje. Stają się objawem dopiero
+     wtedy, gdy Windows w ogóle przestaje zgłaszać bezczynność. Wtedy nie uruchamia się już nic,
+     co na nią czeka &mdash; migawki są tylko tym, co rzuca się w oczy.</p>
+  <p>Gdy tylko jakieś uruchomienia zostaną pominięte, pojawia się ramka z przyciskiem
+     <b>Sprawdź bezczynność</b>. Odczytuje wszystkie pozostałe zadania zaplanowane na tym
+     komputerze, które czekają na bezczynność &mdash; oczyszczanie dysku, czujnik pamięci i dwa
+     tuziny innych &mdash; i porównuje je z ostatnim uruchomieniem systemu. Jeśli choć jedno się
+     wykonało, wykrywanie działa, a komputer był po prostu używany. Jeśli żadne się nie wykonało,
+     a system działa od godzin, bezczynność jest zablokowana, zwykle przez program lub sterownik
+     utrzymujący żądanie zasilania. <code>powercfg /requests</code> z uprawnieniami wskaże,
+     który; zakończenie tego procesu albo restart je zwalnia.</p>
   <h2>Cofni&#281;cie wszystkiego</h2>
   <p><b>Resetuj wszystko</b> usuwa ca&#322;o&#347;&#263; w jednym kroku. Istniej&#261;ce punkty
      przywracania nigdy nie s&#261; usuwane przez narz&#281;dzie &mdash; zmienia ono wy&#322;&#261;cznie

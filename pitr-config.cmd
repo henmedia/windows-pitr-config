@@ -18,6 +18,11 @@ rem
 rem  "snapshot" creates a restore point without a window; "autostart on delay=5m"
 rem  registers a task that does exactly that a few minutes after every system start.
 rem
+rem  "idle" reports whether Windows still reaches an idle state at all - the one
+rem  condition every restore point depends on. It only reads and runs without rights,
+rem  though an unelevated prompt sees fewer scheduled tasks and says so. It returns 2
+rem  when the idle state is blocked system-wide.
+rem
 rem  Running it as "apply" writes settings without a window, for startup scripts:
 rem      pitr-config.cmd apply freq=4h reten=5d size=20g active=on
 rem  It needs an elevated prompt and does not elevate itself - see the note further down.
@@ -33,6 +38,7 @@ if /i "%~1"=="selftest" goto :selftest
 if /i "%~1"=="apply"    goto :apply
 if /i "%~1"=="snapshot"  goto :snapshot
 if /i "%~1"=="autostart" goto :autostart
+if /i "%~1"=="idle"      goto :idle
 
 rem  Started from a network share, cmd.exe prints a warning of its own before the first
 rem  line here runs: UNC paths are not supported as the current directory, and it falls
@@ -117,6 +123,14 @@ set "PITR_ARGS=%*"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$m='#___PSCODE___'; $t=[IO.File]::ReadAllText($env:PITR_SELF,[Text.UTF8Encoding]::new($false)); $sb=[scriptblock]::Create($t.Substring($t.LastIndexOf($m)+$m.Length)); & $sb -AutoStart -Options $env:PITR_ARGS"
 exit /b %errorlevel%
 
+rem  Reine Auskunft: liest nur Aufgaben und Systemstartzeit, schreibt nichts und
+rem  braucht deshalb - anders als die drei Zweige darueber - keine erhoehte
+rem  Eingabeaufforderung.
+:idle
+set "PITR_SELF=%~f0"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$m='#___PSCODE___'; $t=[IO.File]::ReadAllText($env:PITR_SELF,[Text.UTF8Encoding]::new($false)); $sb=[scriptblock]::Create($t.Substring($t.LastIndexOf($m)+$m.Length)); & $sb -Idle"
+exit /b %errorlevel%
+
 #___PSCODE___
 <#
     Point-in-time restore (PITR) / Zeitpunktwiederherstellung
@@ -144,7 +158,7 @@ exit /b %errorlevel%
 #>
 
 param([switch]$SelfTest, [switch]$Apply, [switch]$Snapshot, [switch]$AutoStart,
-      [string]$Options = '')
+      [switch]$Idle, [string]$Options = '')
 
 # Wird von den kopflosen Zweigen gesetzt und von Write-Log/Update-Ui abgefragt.
 $script:Headless = $false
@@ -154,7 +168,7 @@ $ErrorActionPreference = 'Stop'
 # The one place the version is defined. It appears under the headline in the window
 # and in the selftest; a release is tagged with "v" followed by this value. Keeping
 # it out of the batch header above avoids having two numbers that can drift apart.
-$Version  = '1.6.0'
+$Version  = '1.7.0'
 
 # Asked on start unless PITR_NOUPDATE is set. Returns the newest release of the project.
 $UpdateApi = 'https://api.github.com/repos/henmedia/windows-pitr-config/releases/latest'
@@ -228,6 +242,15 @@ en = @{
     tsDisabled = 'disabled'
     tsOverdue  = 'overdue by'
     missedRuns = 'runs skipped: {0}'
+    btnIdleChk = 'Check idle'
+    idlePartial = ' Counted without administrator rights, so only the tasks visible to this account were included.'
+    idleBanner = '{0} runs were skipped. That is normal while the machine is in use - but it can also mean Windows is no longer reporting an idle state at all.'
+    idleBlocked = 'Windows has not reported an idle state since {0}. Not one of {1} other idle-bound tasks has run since then, so this reaches well beyond snapshots. Usually a program or a driver is holding the system awake - "powercfg /requests" in an elevated command prompt names it.'
+    idleFine   = 'Idle detection is working: {0} of {1} other idle-bound tasks have run since the system started, the last one at {2}. The machine was simply in use when a run fell due.'
+    idleEarly  = 'None of the {0} other idle-bound tasks has run yet, but the system has only been up for {1} - too short to mean anything. Worth checking again later.'
+    idleChecking = 'reading the other idle-bound tasks ...'
+    logIdleChk = 'Idle check: {0}'
+    staleSame  = 'The startup task runs a different build of this same version {0} from {1}.'
     noteIdle   = 'Restore points are only created while the system is idle. If the machine is in use or switched off, the run is postponed - and a scheduled slot may be skipped entirely. The configured frequency is therefore an earliest possible interval, not a guarantee. "Create snapshot now" at the top forces a point whenever one is wanted.'
 
     grpPoints  = 'Restore points'
@@ -378,6 +401,15 @@ de = @{
     tsDisabled = 'deaktiviert'
     tsOverdue  = 'überfällig seit'
     missedRuns = 'ausgefallene Läufe: {0}'
+    btnIdleChk = 'Leerlauf prüfen'
+    idlePartial = ' Ohne Administratorrechte gezählt, es sind also nur die für dieses Konto sichtbaren Aufgaben enthalten.'
+    idleBanner = '{0} Läufe sind ausgefallen. Das ist normal, solange der Rechner benutzt wird - es kann aber auch heißen, dass Windows überhaupt keinen Leerlauf mehr meldet.'
+    idleBlocked = 'Windows meldet seit {0} keinen Leerlauf. Seitdem ist keine von {1} weiteren leerlaufgebundenen Aufgaben gelaufen, das reicht also weit über Schnappschüsse hinaus. Meist hält ein Programm oder ein Treiber das System wach - "powercfg /requests" in einer Eingabeaufforderung mit Rechten nennt es.'
+    idleFine   = 'Die Leerlauferkennung arbeitet: {0} von {1} weiteren leerlaufgebundenen Aufgaben liefen seit dem Systemstart, die letzte um {2}. Der Rechner war zu den fälligen Zeiten nur in Benutzung.'
+    idleEarly  = 'Von {0} weiteren leerlaufgebundenen Aufgaben lief noch keine, der Rechner läuft aber erst seit {1} - zu kurz für einen Befund. Später noch einmal prüfen.'
+    idleChecking = 'die anderen leerlaufgebundenen Aufgaben werden gelesen ...'
+    logIdleChk = 'Leerlaufprüfung: {0}'
+    staleSame  = 'Die Startaufgabe führt eine andere Fassung derselben Version {0} aus {1} aus.'
     noteIdle   = 'Wiederherstellungspunkte entstehen nur, wenn das System im Leerlauf ist. Wird der Rechner gerade benutzt oder ist er ausgeschaltet, verschiebt sich der Lauf — ein Termin kann dadurch auch ganz ausfallen. Die eingestellte Häufigkeit ist deshalb ein frühestmöglicher Abstand, keine Garantie. Mit „Schnappschuss jetzt erstellen“ ganz oben lässt sich jederzeit ein Punkt erzwingen.'
 
     grpPoints  = 'Wiederherstellungspunkte'
@@ -530,6 +562,15 @@ fr = @{
     tsDisabled = 'désactivée'
     tsOverdue  = 'en retard de'
     missedRuns = 'exécutions manquées : {0}'
+    btnIdleChk = 'Vérifier l''inactivité'
+    idlePartial = ' Compté sans droits d''administrateur : seules les tâches visibles pour ce compte sont incluses.'
+    idleBanner = '{0} exécutions ont été manquées. C''est normal tant que la machine est utilisée - mais cela peut aussi signifier que Windows ne signale plus aucune inactivité.'
+    idleBlocked = 'Windows ne signale plus aucune inactivité depuis {0}. Depuis, aucune des {1} autres tâches liées à l''inactivité ne s''est exécutée : cela dépasse donc largement les instantanés. En général, un programme ou un pilote maintient le système éveillé - "powercfg /requests" dans une invite de commandes avec droits d''administrateur le nomme.'
+    idleFine   = 'La détection d''inactivité fonctionne : {0} des {1} autres tâches liées à l''inactivité se sont exécutées depuis le démarrage, la dernière à {2}. La machine était simplement utilisée aux heures prévues.'
+    idleEarly  = 'Aucune des {0} autres tâches liées à l''inactivité ne s''est encore exécutée, mais le système ne fonctionne que depuis {1} - trop peu pour conclure. À revérifier plus tard.'
+    idleChecking = 'lecture des autres tâches liées à l''inactivité ...'
+    logIdleChk = 'Vérification de l''inactivité : {0}'
+    staleSame  = 'La tâche de démarrage exécute une autre build de cette même version {0} depuis {1}.'
     noteIdle   = 'Les points de restauration ne sont créés que lorsque le système est inactif. Si la machine est utilisée ou éteinte, l''exécution est reportée — et un créneau planifié peut être ignoré entièrement. La fréquence configurée est donc un intervalle minimal, pas une garantie. « Créer un instantané maintenant », tout en haut, force un point à tout moment.'
 
     grpPoints  = 'Points de restauration'
@@ -678,6 +719,15 @@ es = @{
     tsDisabled = 'desactivada'
     tsOverdue  = 'retrasada'
     missedRuns = 'ejecuciones omitidas: {0}'
+    btnIdleChk = 'Comprobar inactividad'
+    idlePartial = ' Contado sin permisos de administrador: solo se incluyen las tareas visibles para esta cuenta.'
+    idleBanner = 'Se omitieron {0} ejecuciones. Es normal mientras se usa el equipo, pero también puede significar que Windows ya no informa de ninguna inactividad.'
+    idleBlocked = 'Windows no informa de inactividad desde {0}. Desde entonces no se ha ejecutado ninguna de las otras {1} tareas ligadas a la inactividad, así que esto va mucho más allá de las instantáneas. Normalmente un programa o un controlador mantiene el sistema despierto: "powercfg /requests" en un símbolo del sistema con permisos lo indica.'
+    idleFine   = 'La detección de inactividad funciona: {0} de las otras {1} tareas ligadas a la inactividad se han ejecutado desde el arranque, la última a las {2}. El equipo simplemente estaba en uso a las horas previstas.'
+    idleEarly  = 'Todavía no se ha ejecutado ninguna de las otras {0} tareas ligadas a la inactividad, pero el sistema solo lleva {1} encendido: demasiado poco para concluir nada. Conviene volver a comprobarlo más tarde.'
+    idleChecking = 'leyendo las otras tareas ligadas a la inactividad ...'
+    logIdleChk = 'Comprobación de inactividad: {0}'
+    staleSame  = 'La tarea de inicio ejecuta otra compilación de esta misma versión {0} desde {1}.'
     noteIdle   = 'Los puntos de restauración solo se crean cuando el sistema está inactivo. Si el equipo se está usando o está apagado, la ejecución se aplaza — y una cita programada puede omitirse por completo. Por eso la frecuencia configurada es el intervalo mínimo posible, no una garantía. Con «Crear instantánea ahora», arriba del todo, se puede forzar un punto en cualquier momento.'
 
     grpPoints  = 'Puntos de restauración'
@@ -826,6 +876,15 @@ pt = @{
     tsDisabled = 'desativada'
     tsOverdue  = 'atrasada em'
     missedRuns = 'execuções perdidas: {0}'
+    btnIdleChk = 'Verificar ociosidade'
+    idlePartial = ' Contado sem direitos de administrador: só entram as tarefas visíveis para esta conta.'
+    idleBanner = '{0} execuções foram perdidas. Isso é normal enquanto o computador está em uso - mas também pode significar que o Windows não informa mais nenhuma ociosidade.'
+    idleBlocked = 'O Windows não informa ociosidade desde {0}. Desde então nenhuma das outras {1} tarefas ligadas à ociosidade foi executada, portanto isso vai muito além dos instantâneos. Normalmente um programa ou um driver mantém o sistema acordado: "powercfg /requests" em um prompt de comando com permissões o indica.'
+    idleFine   = 'A detecção de ociosidade funciona: {0} das outras {1} tarefas ligadas à ociosidade foram executadas desde a inicialização, a última às {2}. O computador apenas estava em uso nos horários previstos.'
+    idleEarly  = 'Nenhuma das outras {0} tarefas ligadas à ociosidade foi executada ainda, mas o sistema está ligado há apenas {1} - pouco demais para concluir algo. Vale verificar mais tarde.'
+    idleChecking = 'lendo as outras tarefas ligadas à ociosidade ...'
+    logIdleChk = 'Verificação de ociosidade: {0}'
+    staleSame  = 'A tarefa de inicialização executa outra compilação desta mesma versão {0} de {1}.'
     noteIdle   = 'Os pontos de restauração só são criados quando o sistema está ocioso. Se o computador estiver em uso ou desligado, a execução é adiada — e um horário agendado pode ser pulado por completo. Por isso a frequência configurada é um intervalo mínimo, não uma garantia. "Criar instantâneo agora", no topo, força um ponto a qualquer momento.'
 
     grpPoints  = 'Pontos de restauração'
@@ -975,6 +1034,15 @@ it = @{
     tsDisabled = 'disattivata'
     tsOverdue  = 'in ritardo di'
     missedRuns = 'esecuzioni saltate: {0}'
+    btnIdleChk = 'Verifica inattività'
+    idlePartial = ' Conteggiato senza privilegi di amministratore: sono incluse solo le attività visibili a questo account.'
+    idleBanner = '{0} esecuzioni sono state saltate. È normale finché il computer è in uso, ma può anche significare che Windows non segnala più alcuna inattività.'
+    idleBlocked = 'Windows non segnala inattività dal {0}. Da allora non è stata eseguita nessuna delle altre {1} attività legate all''inattività, quindi la cosa va ben oltre gli snapshot. Di solito un programma o un driver tiene sveglio il sistema: "powercfg /requests" in un prompt dei comandi con privilegi lo indica.'
+    idleFine   = 'Il rilevamento dell''inattività funziona: {0} delle altre {1} attività legate all''inattività sono state eseguite dall''avvio, l''ultima alle {2}. Il computer era semplicemente in uso agli orari previsti.'
+    idleEarly  = 'Nessuna delle altre {0} attività legate all''inattività è ancora stata eseguita, ma il sistema è acceso solo da {1}: troppo poco per trarre conclusioni. Meglio ricontrollare più tardi.'
+    idleChecking = 'lettura delle altre attività legate all''inattività ...'
+    logIdleChk = 'Verifica dell''inattività: {0}'
+    staleSame  = 'L''attività di avvio esegue un''altra build di questa stessa versione {0} da {1}.'
     noteIdle   = 'I punti di ripristino vengono creati solo quando il sistema è inattivo. Se il computer è in uso o spento, l''esecuzione viene rinviata - e un appuntamento pianificato può saltare del tutto. La frequenza impostata è quindi un intervallo minimo, non una garanzia. Con «Crea subito un''istantanea», in alto, si può forzare un punto in qualsiasi momento.'
 
     grpPoints  = 'Punti di ripristino'
@@ -1126,6 +1194,15 @@ pl = @{
     tsDisabled = 'wyłączone'
     tsOverdue  = 'opóźnione o'
     missedRuns = 'pominięte uruchomienia: {0}'
+    btnIdleChk = 'Sprawdź bezczynność'
+    idlePartial = ' Policzono bez uprawnień administratora, więc uwzględniono tylko zadania widoczne dla tego konta.'
+    idleBanner = 'Pominięto {0} uruchomień. To normalne, dopóki komputer jest używany - ale może też oznaczać, że Windows w ogóle nie zgłasza już bezczynności.'
+    idleBlocked = 'Windows nie zgłasza bezczynności od {0}. Od tego czasu nie uruchomiło się żadne z pozostałych {1} zadań zależnych od bezczynności, więc sprawa sięga daleko poza migawki. Zwykle jakiś program lub sterownik utrzymuje system w stanie czuwania - "powercfg /requests" w wierszu polecenia z uprawnieniami wskaże, który.'
+    idleFine   = 'Wykrywanie bezczynności działa: {0} z pozostałych {1} zadań zależnych od bezczynności uruchomiło się od startu systemu, ostatnie o {2}. Komputer był po prostu używany w wyznaczonych porach.'
+    idleEarly  = 'Żadne z pozostałych {0} zadań zależnych od bezczynności jeszcze się nie uruchomiło, ale system działa dopiero od {1} - za krótko, by cokolwiek stwierdzić. Warto sprawdzić później.'
+    idleChecking = 'odczyt pozostałych zadań zależnych od bezczynności ...'
+    logIdleChk = 'Sprawdzenie bezczynności: {0}'
+    staleSame  = 'Zadanie startowe uruchamia inną kompilację tej samej wersji {0} z {1}.'
     noteIdle   = 'Punkty przywracania powstają tylko wtedy, gdy system jest bezczynny. Gdy komputer jest używany lub wyłączony, uruchomienie zostaje przesunięte - a zaplanowany termin może zostać pominięty w całości. Ustawiona częstotliwość jest więc najmniejszym możliwym odstępem, a nie gwarancją. Przycisk „Utwórz migawkę teraz” u góry pozwala wymusić punkt w dowolnej chwili.'
 
     grpPoints  = 'Punkty przywracania'
@@ -1323,8 +1400,10 @@ function Format-Duration {
 
 # PowerShell formatiert ein Datum in Anfuehrungszeichen mit der INVARIANTEN Kultur, nicht
 # mit der des Nutzers: "$datum" ergibt 08/27/2026 auch auf einem deutschen System. Jede
-# Zeitangabe geht deshalb ausdruecklich ueber ToString('g') - das ist das kurze Datums- und
-# Zeitformat der Region, dasselbe wie in der Punkteliste.
+# Zeitangabe geht deshalb ausdruecklich ueber ToString('G') - kurzes Datum, lange Uhrzeit
+# der Region, dasselbe wie in der Punkteliste. 'G' und nicht 'g': Das kurze Format laesst
+# die Sekunden weg, und die werden gebraucht, sobald jemand einen Punkt oder einen Lauf
+# einem Eintrag im Aufgabenplaner zuordnen will.
 # Sekunden mit einer Nachkommastelle, ab einer Minute als m:ss. Die Einheiten bleiben
 # als "s" und "min" stehen: Beides ist in allen sieben Sprachen dieselbe Abkuerzung,
 # die Zahl selbst folgt ueber ToString der Region des Nutzers.
@@ -1339,7 +1418,7 @@ function Format-Elapsed {
 function Format-Stamp {
     param($Value)
     if ($null -eq $Value) { return '-' }
-    try { return ([datetime]$Value).ToString('g') } catch { return "$Value" }
+    try { return ([datetime]$Value).ToString('G') } catch { return "$Value" }
 }
 
 function Format-Age {
@@ -1448,9 +1527,10 @@ function Get-RestorePoints {
         $list.Add([pscustomobject]@{
             Sortier   = if ($dt) { $dt } else { [DateTime]::MinValue }
             AlterStd  = $ageH
-            # 'g' is the short date and time of the user's region. A fixed dd.MM.yyyy would be
-            # wrong everywhere outside the German-speaking world.
-            Zeitpunkt = if ($dt) { $dt.ToString('g') } else { T 'unknownTxt' }
+            # 'G' is the short date with the long time of the user's region - the seconds are
+            # what makes a point matchable against a Task Scheduler entry. A fixed dd.MM.yyyy
+            # would be wrong everywhere outside the German-speaking world.
+            Zeitpunkt = if ($dt) { $dt.ToString('G') } else { T 'unknownTxt' }
             Alter     = if ($null -ne $ageH) { Format-Age $ageH } else { '-' }
             Status    = if (-not $vssOk) { T 'stUnknown' }
                         elseif ($vss.ContainsKey("$($p.Id)")) { T 'stShadowOk' }
@@ -1722,6 +1802,22 @@ $xaml = @'
                 Padding="8,5" Margin="0,8,0,0">
           <TextBlock x:Name="TxtIdleNote" TextWrapping="Wrap" Foreground="#2C4A66" FontSize="12"/>
         </Border>
+        <!-- Erscheint erst, wenn Laeufe ausgefallen sind, und beantwortet die Frage, die
+             dann unweigerlich kommt: normal, oder meldet Windows gar keinen Leerlauf mehr?
+             Gelb wie der Veraltet-Hinweis - eine Frage, kein Fehler. -->
+        <Border x:Name="BoxIdle" BorderBrush="#D9B36A" BorderThickness="1" Background="#FFF8E7"
+                Padding="8,6" Margin="0,8,0,0" Visibility="Collapsed">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="TxtIdleDiag" Grid.Column="0" TextWrapping="Wrap"
+                       VerticalAlignment="Center" Foreground="#6B5210" FontSize="12"/>
+            <Button x:Name="BtnIdleChk" Grid.Column="1" Height="24" Padding="12,0" Margin="12,0,0,0"
+                    FontSize="12" VerticalAlignment="Center"/>
+          </Grid>
+        </Border>
         <!-- Nur sichtbar, wenn die Umgebung fehlt. Rot, weil in dem Fall alles andere
              in diesem Fenster folgenlos bleibt. -->
         <Border x:Name="BoxWinRE" BorderBrush="#E3B4B4" BorderThickness="1" Background="#FDF0F0"
@@ -1748,7 +1844,7 @@ $xaml = @'
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
           <ListView.View>
             <GridView>
-              <GridViewColumn Width="150" DisplayMemberBinding="{Binding Zeitpunkt}"/>
+              <GridViewColumn Width="172" DisplayMemberBinding="{Binding Zeitpunkt}"/>
               <GridViewColumn Width="90"  DisplayMemberBinding="{Binding Alter}"/>
               <GridViewColumn Width="90"  DisplayMemberBinding="{Binding Dauer}"/>
               <GridViewColumn Width="190" DisplayMemberBinding="{Binding Status}"/>
@@ -1848,6 +1944,7 @@ foreach ($n in 'TxtHead','TxtSub','TxtIntro','TxtUnofficial',
                'GrpState','CapEdition','TxtEdition','CapLast','TxtLast','CapNext','TxtNext',
                'CapWinRE','TxtWinRE','BtnWinRE','BoxWinRE','TxtWinReNote','BtnCopy','TxtCopyHint',
                'CapTaskState','TxtTaskState','CapDelta','TxtDelta','TxtIdleNote',
+               'BoxIdle','TxtIdleDiag','BtnIdleChk',
                'GrpPoints','TxtPoints','TxtOldest','TxtStorage','TxtStoreNote','LstPoints',
                'RowHist','TxtHistHint','BtnHist',
                'TxtVolumeNote',
@@ -2029,6 +2126,7 @@ function Apply-Language {
     $ctl.CapTaskState.Text = T 'capTaskSt'
     $ctl.CapDelta.Text     = T 'capDelta'
     $ctl.TxtIdleNote.Text  = T 'noteIdle'
+    $ctl.BtnIdleChk.Content = T 'btnIdleChk'
 
     $ctl.GrpPoints.Header   = T 'grpPoints'
     $ctl.TxtStoreNote.Text  = T 'noteStore'
@@ -2057,6 +2155,47 @@ function Apply-Language {
     $ctl.GrpLog.Header       = T 'grpLog'
 
     Build-Choices
+}
+
+# Ausgefallene Laeufe sagen fuer sich genommen nichts: Sie sind der Normalfall,
+# solange jemand am Rechner sitzt. Verdaechtig wird es erst, wenn ueberhaupt keine
+# der anderen leerlaufgebundenen Aufgaben mehr laeuft - dann meldet Windows systemweit
+# keinen Leerlauf, etwa weil ein Programm oder ein Treiber eine Energieanforderung
+# haelt, und die Schnappschuesse sind nur das, was zuerst auffaellt.
+#
+# Die eigene Aufgabe bleibt bei der Zaehlung aussen vor: Sie laesst sich ueber den
+# gruenen Knopf erzwingen und truege dann einen frischen Zeitstempel, der den ganzen
+# Befund umkehren wuerde.
+function Get-IdleHealth {
+    $boot   = (Get-CimInstance Win32_OperatingSystem -ErrorAction Stop).LastBootUpTime
+    $mine   = $TaskPath + $TaskName
+    $total  = 0
+    $since  = 0
+    $newest = $null
+    foreach ($t in (Get-ScheduledTask -ErrorAction Stop)) {
+        if (-not $t.Settings.RunOnlyIfIdle) { continue }
+        if (($t.TaskPath + $t.TaskName) -eq $mine) { continue }
+        $total++
+        $i = Get-ScheduledTaskInfo -InputObject $t -ErrorAction SilentlyContinue
+        if ($null -eq $i -or $null -eq $i.LastRunTime) { continue }
+        # Noch nie gelaufene Aufgaben tragen den 30.11.1999 und wuerden das
+        # "zuletzt im Leerlauf" verfaelschen.
+        if ($i.LastRunTime.Year -lt 2000) { continue }
+        if ($i.LastRunTime -gt $boot) { $since++ }
+        if ($null -eq $newest -or $i.LastRunTime -gt $newest) { $newest = $i.LastRunTime }
+    }
+    # Kurz nach dem Systemstart ist "noch keine gelaufen" kein Befund, sondern zu frueh:
+    # Leerlauf setzt Minuten ohne Eingabe voraus, und die Aufgaben verteilen sich ueber
+    # Stunden. Zwei Stunden Laufzeit sind die Schwelle, ab der Schweigen etwas bedeutet.
+    $upH = ((Get-Date) - $boot).TotalHours
+    return [pscustomobject]@{
+        Boot    = $boot
+        UpHours = $upH
+        Total   = $total
+        Since   = $since
+        Newest  = $newest
+        Blocked = ($total -gt 0 -and $since -eq 0 -and $upH -ge 2)
+    }
 }
 
 function Update-View {
@@ -2149,6 +2288,17 @@ function Update-View {
         # dass zwischen zwei Punkten mehr Zeit liegt als der eingeplante Abstand.
         if ($info.NumberOfMissedRuns -gt 0) {
             $ctl.TxtTaskState.Text += '  ·  ' + ((T 'missedRuns') -f $info.NumberOfMissedRuns)
+            # Der Kasten stellt nur die Frage - beantwortet wird sie auf Knopfdruck,
+            # weil die Antwort jede leerlaufgebundene Aufgabe einzeln abfragt und das
+            # ein bis zwei Sekunden dauert. Ein geholter Befund bleibt danach stehen.
+            if ($null -eq $script:IdleDiag) {
+                $ctl.TxtIdleDiag.Text = (T 'idleBanner') -f $info.NumberOfMissedRuns
+            } else {
+                $ctl.TxtIdleDiag.Text = $script:IdleDiag
+            }
+            $ctl.BoxIdle.Visibility = 'Visible'
+        } else {
+            $ctl.BoxIdle.Visibility = 'Collapsed'
         }
 
         Update-WinReRow
@@ -2186,10 +2336,11 @@ function Update-View {
             $ctl.TxtDelta.Text = T 'unknownTxt'
         }
     } catch {
-        $ctl.TxtLast.Text      = T 'taskMissing'
-        $ctl.TxtNext.Text      = '-'
-        $ctl.TxtTaskState.Text = '-'
-        $ctl.TxtDelta.Text     = '-'
+        $ctl.TxtLast.Text       = T 'taskMissing'
+        $ctl.TxtNext.Text       = '-'
+        $ctl.TxtTaskState.Text  = '-'
+        $ctl.TxtDelta.Text      = '-'
+        $ctl.BoxIdle.Visibility = 'Collapsed'
     }
 
     # The drop-downs show our own (policy) values only; other levels stay on "default".
@@ -2242,8 +2393,11 @@ function Update-AutoRow {
 
     $s = Get-AutoStartState
     if ($null -ne $s -and $s.Stale) {
-        $ctl.TxtStale.Text = if ($s.Gone) { (T 'staleGone') -f $s.Path }
-                             else { (T 'staleOld') -f $s.Version, $s.Path, $Version }
+        $ctl.TxtStale.Text = switch ($s.Reason) {
+            'gone'    { (T 'staleGone') -f $s.Path }
+            'content' { (T 'staleSame') -f $Version, $s.Path }
+            default   { (T 'staleOld')  -f $s.Version, $s.Path, $Version }
+        }
         $ctl.BoxStale.Visibility = 'Visible'
     } else {
         $ctl.BoxStale.Visibility = 'Collapsed'
@@ -2380,25 +2534,28 @@ function Get-AutoStartState {
 
     $same = $false
     try { $same = ([IO.Path]::GetFullPath($path) -ieq [IO.Path]::GetFullPath($env:PITR_SELF)) } catch { }
-    if ($same) { return [pscustomobject]@{ Path = $path; Stale = $false; Gone = $false; Version = $Version } }
+    if ($same) { return [pscustomobject]@{ Path = $path; Stale = $false; Gone = $false; Version = $Version; Reason = 'same' } }
 
     if (-not (Test-Path -LiteralPath $path)) {
-        return [pscustomobject]@{ Path = $path; Stale = $true; Gone = $true; Version = $null }
+        return [pscustomobject]@{ Path = $path; Stale = $true; Gone = $true; Version = $null; Reason = 'gone' }
     }
 
     $v = Get-FileVersion $path
     # Gleiche Nummer, anderer Inhalt: kommt bei Zwischenstaenden vor, die noch keine
-    # eigene Version tragen. Dann entscheidet der Vergleich der Pruefsummen.
-    $stale = $false
-    if ($v -ne $Version) { $stale = $true }
+    # eigene Version tragen. Dann entscheidet der Vergleich der Pruefsummen. Welcher
+    # der beiden Faelle vorliegt, muss mit heraus - sonst nennt der Hinweis zweimal
+    # dieselbe Nummer und liest sich wie ein Fehler des Werkzeugs.
+    $stale  = $false
+    $reason = 'ok'
+    if ($v -ne $Version) { $stale = $true; $reason = 'version' }
     else {
         try {
             $h1 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
             $h2 = (Get-FileHash -LiteralPath $env:PITR_SELF -Algorithm SHA256).Hash
-            $stale = ($h1 -ne $h2)
+            if ($h1 -ne $h2) { $stale = $true; $reason = 'content' }
         } catch { }
     }
-    return [pscustomobject]@{ Path = $path; Stale = $stale; Gone = $false; Version = $v }
+    return [pscustomobject]@{ Path = $path; Stale = $stale; Gone = $false; Version = $v; Reason = $reason }
 }
 
 function Copy-SelfLocal {
@@ -2512,7 +2669,7 @@ function Invoke-TaskNow {
 function Set-Busy {
     param([bool]$On)
     $buttons = @('BtnSnapNow','BtnReset','BtnRefresh','BtnApply','BtnApplyNow','BtnWinRE','BtnCopy','BtnHist',
-                 'ChkAuto','CmbAutoDelay','BtnAutoUpd') +
+                 'ChkAuto','CmbAutoDelay','BtnAutoUpd','BtnIdleChk') +
                @($LangCodes | ForEach-Object { 'BtnLang' + $_.ToUpper() })
     foreach ($b in $buttons) { $ctl[$b].IsEnabled = -not $On }
     $window.Cursor = if ($On) { [System.Windows.Input.Cursors]::Wait } else { $null }
@@ -2635,6 +2792,32 @@ $ctl.BtnAutoUpd.Add_Click({
     catch { Write-Log "$(T 'logError'): $($_.Exception.Message)" }
     finally { Set-Busy $false }
 })
+
+# Der Befund wird gemerkt, damit ihn die naechste Aktualisierung der Ansicht nicht
+# wieder durch die blosse Frage ersetzt.
+$ctl.BtnIdleChk.Add_Click({
+    Set-Busy $true
+    $ctl.TxtIdleDiag.Text = T 'idleChecking'
+    Update-Ui
+    try {
+        $h = Get-IdleHealth
+        if ($h.Blocked) {
+            $script:IdleDiag = (T 'idleBlocked') -f (Format-Stamp $h.Boot), $h.Total
+        } elseif ($h.Since -eq 0) {
+            $script:IdleDiag = (T 'idleEarly') -f $h.Total, (Format-Age $h.UpHours)
+        } else {
+            $script:IdleDiag = (T 'idleFine') -f $h.Since, $h.Total, (Format-Stamp $h.Newest)
+        }
+        # Ohne Rechte sind Teile der Aufgabenplanung unsichtbar. Bei einem positiven
+        # Befund ist das harmlos, bei "blockiert" waere es ein Fehlalarm aus einer
+        # Teilmenge - also gehoert der Vorbehalt an jeden der drei Befunde.
+        if (-not (Test-Admin)) { $script:IdleDiag += T 'idlePartial' }
+        $ctl.TxtIdleDiag.Text = $script:IdleDiag
+        Write-Log ((T 'logIdleChk') -f $script:IdleDiag)
+    }
+    catch { Write-Log "$(T 'logError'): $($_.Exception.Message)" }
+    finally { Set-Busy $false }
+})
 $ctl.CmbAutoDelay.Add_SelectionChanged({ if ($ctl.ChkAuto.IsChecked) { Apply-AutoStart } })
 
 $ctl.BtnHist.Add_Click({
@@ -2747,6 +2930,45 @@ $window.Add_ContentRendered({
 # als eine hoefliche. Rueckgabewerte: 0 in Ordnung, 1 Eingabefehler.
 # "snapshot" und "autostart" brauchen kein Fenster. Der Zweig sitzt vor dem von
 # "apply", damit beide dieselbe Vorpruefung teilen.
+# "idle" liest nur und braucht deshalb keine Rechte. Rueckgabewert 2 heisst "Leerlauf
+# systemweit blockiert" und laesst sich damit in einer Ueberwachung auswerten.
+if ($Idle) {
+    $script:Headless = $true
+    try {
+        $i = Get-ScheduledTaskInfo -TaskPath $TaskPath -TaskName $TaskName -ErrorAction SilentlyContinue
+        if ($i) {
+            Write-Host "PITRTask: last run $($i.LastRunTime), next $($i.NextRunTime), missed $($i.NumberOfMissedRuns)"
+        }
+        $h = Get-IdleHealth
+        Write-Host "booted: $($h.Boot)"
+        Write-Host "other idle-bound tasks: $($h.Since) of $($h.Total) have run since boot"
+        if ($h.Newest) { Write-Host "  most recent idle run: $($h.Newest)" }
+        $full = Test-Admin
+        if (-not $full) {
+            Write-Host '  note: not elevated - only the tasks visible to this account were counted.'
+        }
+        if ($h.Blocked) {
+            Write-Host 'RESULT - blocked: Windows has not reported an idle state since boot.'
+            Write-Host '  Nothing that waits for idle runs while this lasts, snapshots included.'
+            Write-Host '  Run "powercfg /requests" in an elevated prompt to see what holds the system awake.'
+            if (-not $full) {
+                Write-Host '  WARNING - this verdict was drawn from a partial list. Repeat it from an'
+                Write-Host '  elevated prompt before acting on it.'
+            }
+            exit 2
+        }
+        if ($h.Since -eq 0) {
+            Write-Host ('RESULT - too early: up for {0:N1} hours only, no verdict yet.' -f $h.UpHours)
+            exit 0
+        }
+        Write-Host 'RESULT - idle detection works.'
+        exit 0
+    } catch {
+        Write-Host "pitr-config: $($_.Exception.Message)"
+        exit 1
+    }
+}
+
 if ($Snapshot -or $AutoStart) {
     $script:Headless = $true
 
@@ -2982,6 +3204,12 @@ if ($SelfTest) {
         Write-Host "  Beim Start   : [$(if ($ctl.ChkAuto.IsChecked) { 'x' } else { ' ' })] $($ctl.ChkAuto.Content) ($(($ctl.CmbAutoDelay.Items | ForEach-Object { $_.Content }) -join ' | '))"
         Write-Host "  Start-Hinweis: $($ctl.TxtAutoHint.Text)"
         Write-Host "  Veraltet-Text: $((T 'staleOld') -f '1.5.0', 'C:\ProgramData\pitr-config\pitr-config.cmd', $Version)"
+        Write-Host "  Gleiche Vers.: $((T 'staleSame') -f $Version, 'C:\ProgramData\pitr-config\pitr-config.cmd')"
+        Write-Host "  Leerlauf-Frage: $((T 'idleBanner') -f 5) [$($ctl.BtnIdleChk.Content)]"
+        Write-Host "  Leerlauf-Stopp: $((T 'idleBlocked') -f '29.08.2026 09:25', 33)"
+        Write-Host "  Leerlauf-Gut : $((T 'idleFine') -f 6, 33, '29.08.2026 18:06')"
+        Write-Host "  Leerlauf-Frueh: $((T 'idleEarly') -f 33, '25 min')"
+        Write-Host "  Leerlauf-Teil : $(T 'idlePartial')"
         Write-Host "  WinRE        : $($ctl.CapWinRE.Text) $($ctl.TxtWinRE.Text) [$($ctl.BtnWinRE.Content)]"
         Write-Host "  WinRE-Warnung: $($ctl.TxtWinReNote.Text)"
         Write-Host "  Kopierknopf  : $($ctl.BtnCopy.Content) - $($ctl.TxtCopyHint.Text)"

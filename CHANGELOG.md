@@ -4,6 +4,43 @@ Notable changes are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] — 2026-08-30
+
+### Added
+
+- **An answer to "why is there no restore point?"** A run that falls due while the machine is in
+  use is dropped without a word: `PITRTask` carries `RunOnlyIfIdle`, and Windows writes nothing
+  to any log when that condition fails. The only trace is `NumberOfMissedRuns`, which the window
+  has always shown — but skipped runs on their own mean nothing, because they are the normal case
+  while somebody is working. So when the counter is above zero the window now offers a **Check
+  idle** button. It reads every *other* task on the machine that carries `RunOnlyIfIdle` — disk
+  cleanup, storage sense, memory diagnostics, two dozen more — and compares their last run
+  against the last boot. If at least one of them has run, idle detection works and the machine
+  was simply in use. If not one of them has run and the system has been up for more than two
+  hours, the idle state is blocked system-wide, and the missing restore points are a symptom
+  rather than the fault. The tool's own task is deliberately left out of that count: the green
+  button can force it, and a forced run would carry a fresh timestamp that reverses the verdict.
+- `pitr-config.cmd idle` — the same check without a window. It only reads, so unlike `apply`,
+  `snapshot` and `autostart` it runs without administrator rights, and it returns **2** when the
+  idle state is blocked, which makes it usable from monitoring. Rights do change the answer
+  though: an unelevated prompt sees only the scheduled tasks visible to that account, so both
+  the command and the window say when a verdict was drawn from a partial list.
+
+### Changed
+
+- Timestamps in the window now carry seconds. `Format-Stamp` and the restore point list both
+  moved from the region's short date-and-time pattern to the long one — the seconds are what
+  makes a point or a run matchable against an entry in the Task Scheduler, and without them a
+  next run at 20:47:22 simply read 20:47. The time column grew from 150 to 172 pixels to fit
+  the widest case, which is the English 12-hour form.
+
+### Fixed
+
+- The warning about an outdated startup copy printed the same version number twice when the copy
+  differed from the running file in content only — "runs version 1.6.0 … this one is 1.6.0". The
+  detection was right, the sentence was not: a different version and a different build of the
+  same version now read differently.
+
 ## [1.6.0] — 2026-08-29
 
 ### Added

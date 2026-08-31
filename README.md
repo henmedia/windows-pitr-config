@@ -62,7 +62,7 @@ switch at any time. The window also links to the project and to the
 language you are currently using.
 
 ![The tool running on Windows 11 Pro: current state, existing restore points, and the four
-settings](docs/screenshot.png?v=1.8.0)
+settings](docs/screenshot.png?v=1.8.1)
 <!-- The ?v= is a cache buster. GitHub proxies README images and caches them by URL,
      so replacing the file alone keeps serving the old picture for a long time.
      Bump this whenever the screenshot is regenerated. -->
@@ -271,6 +271,37 @@ pitr-config.cmd noupdate
 
 This is the only network connection the tool makes. The request reveals nothing about your
 system beyond what any web request does — an IP address and a `pitr-config` user agent.
+
+### Whether this Windows has the feature at all
+
+Point-in-time restore is not on every Windows 11, and a new Windows version is not what
+decides it: the feature also reached existing builds through a cumulative update. On the
+machine this was built on, the component carries version `10.0.26100.8875` inside a system
+reporting build `26200` — two machines on the same build can genuinely differ, so a build
+number settles nothing.
+
+The tool therefore asks after the component itself rather than after a number, and puts the
+answer on the first line of *Current state*:
+
+```
+Point-in-time restore:  supported by this Windows  ·  component 10.0.26100.8875
+```
+
+Two things have to be there, and both are read from the system rather than assumed:
+
+- the **COM class** through which the scheduled task calls the snapshot component,
+  `{093CB270-C282-4C22-B2EA-7D2BF1C30BBF}`. Its registration also names the file, so that
+  path is never guessed; a registration pointing at a file that is gone does not count.
+- the scheduled task **`\Microsoft\Windows\Setup\PITRTask`**, which calls it on a schedule.
+
+Neither present means this Windows does not have the feature. A red box says so, and
+everything that writes is switched off — those values would sit in the registry with nothing
+to read them. Reading, the language buttons and **Copy state** stay available.
+
+Only one of the two present is a different finding and is named differently: the feature is
+there but incomplete. The box says which half is missing and points at an elevated
+`sfc /scannow`. The controls stay usable in that case on purpose — a misreading must not
+disable the tool on a system where the feature works.
 
 ### The recovery environment
 
@@ -516,7 +547,9 @@ one. `status` prints the raw level — `GPO`, `CSP`, `UX` — for the same reaso
 
 ## Requirements
 
-- Windows 11 with Point-in-time restore present (Settings → System → Recovery).
+- Windows 11 with Point-in-time restore present (Settings → System → Recovery). The tool
+  checks this itself and says plainly when the feature is missing — see
+  [below](#whether-this-windows-has-the-feature-at-all).
   Home and Pro are both confirmed working; Enterprise offers these settings natively anyway.
 - Administrator rights (the tool requests them itself)
 - Windows PowerShell 5.1, which ships with Windows
@@ -610,10 +643,19 @@ Releases follow `MAJOR.MINOR.PATCH` and are tagged `vX.Y.Z`. The running version
 the window below the headline and printed by `pitr-config.cmd selftest`, so a bug report can
 always name the exact build. What changed between releases is in [CHANGELOG.md](CHANGELOG.md).
 
-A release that only adds a language, with no other change to the interface or its behaviour,
-bumps the patch version rather than the minor one — the same tier as a bug fix. The set of
-available languages is not a feature in the sense the minor version tracks; it is content, and
-treating it as such keeps a translation-only release from reading as bigger than it is.
+The minor version tracks what the tool can newly **do** on a system where it already worked.
+Two kinds of release stay on the patch tier even though something in the window visibly
+changed:
+
+- **Only a language added**, with no other change to the interface or its behaviour. The set of
+  available languages is not a feature in the sense the minor version tracks; it is content,
+  and treating it as such keeps a translation-only release from reading as bigger than it is.
+- **A state the tool previously handled badly, now named.** 1.8.1 is the example: on a Windows
+  without point-in-time restore the window used to fill with blank fields and no explanation.
+  New wording, a new line and a new box — but nothing a working system can do afterwards that
+  it could not do before. That is a repair, not a feature.
+
+Everything that widens what the tool can do gets a minor version.
 
 ## Support
 

@@ -4,6 +4,47 @@ Notable changes are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] — 2026-08-31
+
+A patch rather than a minor version. On a Windows without point-in-time restore the window
+used to fill with blank fields and a bare *PITRTask not found*, leaving the reason to
+guesswork — naming that state is closer to repairing a defect than to adding a feature.
+
+### Added
+
+- The window now answers, before anything else, whether this Windows has point-in-time
+  restore at all. It is not on every Windows 11, and the build number does not settle it: the
+  feature also reached existing builds through a cumulative update, so two machines reporting
+  the same build can differ. On the machine this was built on the component carries version
+  `10.0.26100.8875` inside a system reporting build `26200`.
+
+  The check therefore asks after the component and not after a number. Two things have to be
+  present: the COM class the scheduled task calls the snapshot component through
+  (`{093CB270-C282-4C22-B2EA-7D2BF1C30BBF}`, whose registration also names the file, so that
+  path is read rather than guessed — a registration pointing at a file that is gone does not
+  count), and the scheduled task `\Microsoft\Windows\Setup\PITRTask` that calls it on a
+  schedule. The answer is the first line of *Current state*, with the component version beside
+  it, and it is part of **Copy state** so a forum post carries it too.
+
+  With neither present, a red box says the feature is absent and everything that writes is
+  switched off — those values would sit in the registry with nothing to read them. Reading,
+  the language buttons and *Copy state* stay available. With only one of the two present, the feature is there
+  but incomplete; that is a different finding and is worded differently, the box names the
+  missing half and points at an elevated `sfc /scannow`. The controls stay usable in that
+  case on purpose — a misreading must not disable the tool on a system where the feature
+  works.
+
+  The check costs about 16 ms and reuses the scheduled task the view reads anyway.
+
+- `pitr-config.cmd apply` and `apply status` print the same finding as a warning line when
+  the feature does not look present. A warning, not a refusal: a startup script that already
+  contains the call should not begin failing because a check misread something.
+
+### Fixed
+
+- The header comment in the file still announced seven languages. There have been ten since
+  1.7.1.
+
 ## [1.8.0] — 2026-08-31
 
 A minor version rather than a patch: it removes something the window used to show, and the

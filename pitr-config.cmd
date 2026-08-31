@@ -2,8 +2,9 @@
 rem ===========================================================================
 rem  pitr-config.cmd
 rem  Configures Point-in-time restore / Zeitpunktwiederherstellung (Windows 11).
-rem  Seven languages: English, German, French, Spanish, Portuguese, Italian and
-rem  Polish. The one matching the Windows display language is picked automatically.
+rem  Ten languages: English, German, Dutch, French, Spanish, Portuguese, Italian,
+rem  Polish, Ukrainian and Czech. The one matching the Windows display language is
+rem  picked automatically.
 rem
 rem  Single file: the complete PowerShell code sits below the #___PSCODE___
 rem  marker and is loaded from here. Just double-click it; the file requests
@@ -168,7 +169,7 @@ $ErrorActionPreference = 'Stop'
 # The one place the version is defined. It appears under the headline in the window
 # and in the selftest; a release is tagged with "v" followed by this value. Keeping
 # it out of the batch header above avoids having two numbers that can drift apart.
-$Version  = '1.8.0'
+$Version  = '1.8.1'
 
 # Asked on start unless PITR_NOUPDATE is set. Returns the newest release of the project.
 $UpdateApi = 'https://api.github.com/repos/henmedia/windows-pitr-config/releases/latest'
@@ -190,6 +191,14 @@ $KeyPath  = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\Recovery\PITR
 $SnapPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\Recovery\PITR\Snapshots'
 $TaskPath = '\Microsoft\Windows\Setup\'
 $TaskName = 'PITRTask'
+# Die CLSID des Bestandteils, der die Momentaufnahmen anlegt. Sie ist nicht geraten,
+# sondern abgelesen: Die Aufgabe PITRTask ruft ihn als ComHandler unter genau dieser
+# Kennung auf, und unter dem Eintrag steht auch, wo die zugehoerige Datei liegt.
+$PitrClsid = 'HKLM:\SOFTWARE\Classes\CLSID\{093CB270-C282-4C22-B2EA-7D2BF1C30BBF}'
+
+# Von Update-View gesetzt, von Set-Busy gelesen: Fehlt die Funktion im System, bleiben
+# die schreibenden Bedienelemente dauerhaft aus.
+$script:NoPitr = $false
 $Level    = 'GPO'
 
 # Windows default retention (minutes). Longer values demonstrably work, even
@@ -231,6 +240,16 @@ en = @{
     tipUpdate  = 'Opens the download page in the browser. Nothing is downloaded or installed automatically.'
 
     grpState   = 'Current state'
+    capSupport = 'Point-in-time restore:'
+    supOk      = 'supported by this Windows'
+    supPart    = 'incompletely installed'
+    supNone    = 'not present in this Windows'
+    supComp    = 'component {0}'
+    supMissCom = 'the snapshot component is not registered'
+    supMissTask= 'the scheduled task PITRTask is missing'
+    noteSupNone= 'This Windows does not bring point-in-time restore with it: neither the snapshot component nor the scheduled task PITRTask is present. The feature also reaches existing builds through a cumulative update, so the build number alone does not settle it - a pending update may still deliver it. Until then nothing set in this window has any effect, which is why everything that writes is switched off. Reading and copying the state stay available.'
+    noteSupPart= 'Point-in-time restore is only half present here: {0}. Snapshots are unlikely to be created in this state. The controls stay usable, but check afterwards whether a point was really made. An elevated "sfc /scannow" is the usual repair.'
+    logNoPitr  = 'This Windows does not have point-in-time restore - everything that writes is switched off.'
     capEdition = 'Windows edition:'
     capLast    = 'Last run:'
     capNext    = 'Next run:'
@@ -390,6 +409,16 @@ de = @{
     tipUpdate  = 'Öffnet die Download-Seite im Browser. Es wird nichts automatisch heruntergeladen oder installiert.'
 
     grpState   = 'Aktueller Zustand'
+    capSupport = 'Zeitpunktwiederherstellung:'
+    supOk      = 'von diesem Windows unterstützt'
+    supPart    = 'unvollständig installiert'
+    supNone    = 'in diesem Windows nicht vorhanden'
+    supComp    = 'Komponente {0}'
+    supMissCom = 'der Bestandteil für die Momentaufnahmen ist nicht registriert'
+    supMissTask= 'die Aufgabe PITRTask fehlt'
+    noteSupNone= 'Dieses Windows bringt die Zeitpunktwiederherstellung nicht mit: Weder der Bestandteil für die Momentaufnahmen noch die Aufgabe PITRTask ist vorhanden. Die Funktion kommt auch über ein kumulatives Update in bestehende Builds - die Buildnummer allein entscheidet also nicht, ein ausstehendes Update kann sie noch nachliefern. Bis dahin bleibt folgenlos, was in diesem Fenster eingestellt wird; deshalb ist alles Schreibende abgeschaltet. Lesen und Kopieren des Zustands bleiben möglich.'
+    noteSupPart= 'Die Zeitpunktwiederherstellung ist hier nur halb vorhanden: {0}. In diesem Zustand entstehen vermutlich keine Momentaufnahmen. Die Bedienelemente bleiben nutzbar, es ist hinterher aber zu prüfen, ob wirklich ein Punkt entstanden ist. „sfc /scannow“ mit Administratorrechten ist die übliche Reparatur.'
+    logNoPitr  = 'Dieses Windows kennt die Zeitpunktwiederherstellung nicht - alles Schreibende ist abgeschaltet.'
     capEdition = 'Windows-Edition:'
     capLast    = 'Letzter Lauf:'
     capNext    = 'Nächster Lauf:'
@@ -547,6 +576,16 @@ nl = @{
     tipUpdate  = 'Opent de downloadpagina in de browser. Er wordt niets automatisch gedownload of geïnstalleerd.'
 
     grpState   = 'Huidige status'
+    capSupport = 'Herstel naar een tijdstip:'
+    supOk      = 'door dit Windows ondersteund'
+    supPart    = 'onvolledig geïnstalleerd'
+    supNone    = 'niet aanwezig in dit Windows'
+    supComp    = 'onderdeel {0}'
+    supMissCom = 'het onderdeel voor de momentopnamen is niet geregistreerd'
+    supMissTask= 'de geplande taak PITRTask ontbreekt'
+    noteSupNone= 'Dit Windows brengt herstel naar een tijdstip niet mee: noch het onderdeel voor de momentopnamen, noch de geplande taak PITRTask is aanwezig. De functie bereikt bestaande builds ook via een cumulatieve update, het buildnummer alleen beslist dus niet - een openstaande update kan haar alsnog leveren. Tot dan blijft zonder gevolg wat in dit venster wordt ingesteld; daarom is alles wat schrijft uitgeschakeld. Lezen en het kopiëren van de status blijven mogelijk.'
+    noteSupPart= 'Herstel naar een tijdstip is hier maar half aanwezig: {0}. In deze toestand ontstaan waarschijnlijk geen momentopnamen. De bedieningselementen blijven bruikbaar, maar controleer daarna of er werkelijk een punt is gemaakt. Een "sfc /scannow" met beheerdersrechten is de gebruikelijke reparatie.'
+    logNoPitr  = 'Dit Windows kent herstel naar een tijdstip niet - alles wat schrijft is uitgeschakeld.'
     capEdition = 'Windows-editie:'
     capLast    = 'Laatste uitvoering:'
     capNext    = 'Volgende uitvoering:'
@@ -708,6 +747,16 @@ fr = @{
     tipUpdate  = 'Ouvre la page de téléchargement dans le navigateur. Rien n''est téléchargé ni installé automatiquement.'
 
     grpState   = 'État actuel'
+    capSupport = 'Restauration à un instant donné :'
+    supOk      = 'prise en charge par ce Windows'
+    supPart    = 'installation incomplète'
+    supNone    = 'absente de ce Windows'
+    supComp    = 'composant {0}'
+    supMissCom = 'le composant des instantanés n''est pas enregistré'
+    supMissTask= 'la tâche planifiée PITRTask est absente'
+    noteSupNone= 'Ce Windows n''embarque pas la restauration à un instant donné : ni le composant des instantanés ni la tâche planifiée PITRTask ne sont présents. La fonction arrive aussi dans les versions existantes par une mise à jour cumulative : le numéro de build seul ne tranche donc pas, une mise à jour en attente peut encore l''apporter. D''ici là, rien de ce qui est réglé dans cette fenêtre n''a d''effet ; c''est pourquoi tout ce qui écrit est désactivé. La lecture et la copie de l''état restent possibles.'
+    noteSupPart= 'La restauration à un instant donné n''est ici qu''à moitié présente : {0}. Dans cet état, aucun instantané ne sera vraisemblablement créé. Les commandes restent utilisables, mais il faut vérifier ensuite qu''un point a réellement été créé. Un « sfc /scannow » avec des droits d''administrateur est la réparation habituelle.'
+    logNoPitr  = 'Ce Windows ne connaît pas la restauration à un instant donné - tout ce qui écrit est désactivé.'
     capEdition = 'Édition de Windows :'
     capLast    = 'Dernière exécution :'
     capNext    = 'Prochaine exécution :'
@@ -865,6 +914,16 @@ es = @{
     tipUpdate  = 'Abre la página de descarga en el navegador. No se descarga ni se instala nada automáticamente.'
 
     grpState   = 'Estado actual'
+    capSupport = 'Restauración a un momento anterior:'
+    supOk      = 'compatible con este Windows'
+    supPart    = 'instalación incompleta'
+    supNone    = 'no presente en este Windows'
+    supComp    = 'componente {0}'
+    supMissCom = 'el componente de las instantáneas no está registrado'
+    supMissTask= 'falta la tarea programada PITRTask'
+    noteSupNone= 'Este Windows no incorpora la restauración a un momento anterior: no está presente ni el componente de las instantáneas ni la tarea programada PITRTask. La función también llega a compilaciones existentes mediante una actualización acumulativa, así que el número de compilación por sí solo no lo decide: una actualización pendiente todavía puede traerla. Hasta entonces no surte efecto nada de lo que se ajuste en esta ventana; por eso está desactivado todo lo que escribe. La lectura y la copia del estado siguen disponibles.'
+    noteSupPart= 'La restauración a un momento anterior solo está presente a medias: {0}. En este estado probablemente no se crean instantáneas. Los controles siguen utilizables, pero conviene comprobar después si realmente se ha creado un punto. Un «sfc /scannow» con derechos de administrador es la reparación habitual.'
+    logNoPitr  = 'Este Windows no conoce la restauración a un momento anterior: todo lo que escribe está desactivado.'
     capEdition = 'Edición de Windows:'
     capLast    = 'Última ejecución:'
     capNext    = 'Próxima ejecución:'
@@ -1022,6 +1081,16 @@ pt = @{
     tipUpdate  = 'Abre a página de download no navegador. Nada é baixado nem instalado automaticamente.'
 
     grpState   = 'Estado atual'
+    capSupport = 'Restauração para um ponto no tempo:'
+    supOk      = 'compatível com este Windows'
+    supPart    = 'instalação incompleta'
+    supNone    = 'não presente neste Windows'
+    supComp    = 'componente {0}'
+    supMissCom = 'o componente dos instantâneos não está registrado'
+    supMissTask= 'a tarefa agendada PITRTask está ausente'
+    noteSupNone= 'Este Windows não traz a restauração para um ponto no tempo: não está presente nem o componente dos instantâneos nem a tarefa agendada PITRTask. O recurso também chega a builds existentes por uma atualização cumulativa, portanto o número da build sozinho não decide - uma atualização pendente ainda pode entregá-lo. Até lá, nada do que for ajustado nesta janela tem efeito; por isso tudo o que escreve está desativado. A leitura e a cópia do estado continuam disponíveis.'
+    noteSupPart= 'A restauração para um ponto no tempo está presente apenas pela metade: {0}. Nesse estado provavelmente não são criados instantâneos. Os controles continuam utilizáveis, mas convém verificar depois se um ponto foi realmente criado. Um "sfc /scannow" com direitos de administrador é o reparo habitual.'
+    logNoPitr  = 'Este Windows não conhece a restauração para um ponto no tempo - tudo o que escreve está desativado.'
     capEdition = 'Edição do Windows:'
     capLast    = 'Última execução:'
     capNext    = 'Próxima execução:'
@@ -1180,6 +1249,16 @@ it = @{
     tipUpdate  = 'Apre la pagina di download nel browser. Nulla viene scaricato o installato automaticamente.'
 
     grpState   = 'Stato attuale'
+    capSupport = 'Ripristino a un punto nel tempo:'
+    supOk      = 'supportato da questo Windows'
+    supPart    = 'installazione incompleta'
+    supNone    = 'non presente in questo Windows'
+    supComp    = 'componente {0}'
+    supMissCom = 'il componente delle istantanee non è registrato'
+    supMissTask= 'l''attività pianificata PITRTask non c''è'
+    noteSupNone= 'Questo Windows non porta con sé il ripristino a un punto nel tempo: non è presente né il componente delle istantanee né l''attività pianificata PITRTask. La funzione raggiunge le build esistenti anche tramite un aggiornamento cumulativo, quindi il solo numero di build non decide: un aggiornamento in sospeso può ancora portarla. Fino ad allora nulla di ciò che viene impostato in questa finestra ha effetto; per questo tutto ciò che scrive è disattivato. La lettura e la copia dello stato restano possibili.'
+    noteSupPart= 'Il ripristino a un punto nel tempo qui è presente solo a metà: {0}. In questo stato probabilmente non vengono create istantanee. I comandi restano utilizzabili, ma è poi da verificare se un punto è stato davvero creato. Un «sfc /scannow» con diritti di amministratore è la riparazione abituale.'
+    logNoPitr  = 'Questo Windows non conosce il ripristino a un punto nel tempo - tutto ciò che scrive è disattivato.'
     capEdition = 'Edizione di Windows:'
     capLast    = 'Ultima esecuzione:'
     capNext    = 'Prossima esecuzione:'
@@ -1340,6 +1419,16 @@ pl = @{
     tipUpdate  = 'Otwiera stronę pobierania w przeglądarce. Nic nie jest pobierane ani instalowane automatycznie.'
 
     grpState   = 'Stan bieżący'
+    capSupport = 'Przywracanie do punktu w czasie:'
+    supOk      = 'obsługiwane przez ten system Windows'
+    supPart    = 'zainstalowane niekompletnie'
+    supNone    = 'nieobecne w tym systemie Windows'
+    supComp    = 'składnik {0}'
+    supMissCom = 'składnik migawek nie jest zarejestrowany'
+    supMissTask= 'brakuje zaplanowanego zadania PITRTask'
+    noteSupNone= 'Ten system Windows nie zawiera przywracania do punktu w czasie: nie ma ani składnika migawek, ani zaplanowanego zadania PITRTask. Funkcja trafia do istniejących kompilacji także przez aktualizację zbiorczą, więc sam numer kompilacji o niczym nie przesądza - oczekująca aktualizacja może ją jeszcze dostarczyć. Do tego czasu nic z tego, co zostanie ustawione w tym oknie, nie odniesie skutku; dlatego wszystko, co zapisuje, jest wyłączone. Odczyt i kopiowanie stanu pozostają dostępne.'
+    noteSupPart= 'Przywracanie do punktu w czasie jest tu obecne tylko połowicznie: {0}. W tym stanie migawki prawdopodobnie nie powstają. Elementy sterujące pozostają dostępne, ale należy potem sprawdzić, czy punkt rzeczywiście powstał. Zwykłą naprawą jest „sfc /scannow” z uprawnieniami administratora.'
+    logNoPitr  = 'Ten system Windows nie zna przywracania do punktu w czasie - wszystko, co zapisuje, jest wyłączone.'
     capEdition = 'Edycja systemu Windows:'
     capLast    = 'Ostatnie uruchomienie:'
     capNext    = 'Następne uruchomienie:'
@@ -1497,6 +1586,16 @@ cs = @{
     tipUpdate  = 'Otevře stránku pro stažení v prohlížeči. Nic se automaticky nestahuje ani neinstaluje.'
 
     grpState   = 'Aktuální stav'
+    capSupport = 'Obnovení k určitému okamžiku:'
+    supOk      = 'tímto systémem Windows podporováno'
+    supPart    = 'nainstalováno neúplně'
+    supNone    = 'v tomto systému Windows není'
+    supComp    = 'komponenta {0}'
+    supMissCom = 'komponenta pro snímky není zaregistrována'
+    supMissTask= 'naplánovaná úloha PITRTask chybí'
+    noteSupNone= 'Tento systém Windows obnovení k určitému okamžiku neobsahuje: není zde ani komponenta pro snímky, ani naplánovaná úloha PITRTask. Funkce se do stávajících buildů dostává i kumulativní aktualizací, samotné číslo buildu tedy nerozhoduje - čekající aktualizace ji ještě může přinést. Do té doby zůstane bez následku vše, co se v tomto okně nastaví; proto je vypnuto vše, co zapisuje. Čtení a kopírování stavu zůstávají k dispozici.'
+    noteSupPart= 'Obnovení k určitému okamžiku je zde přítomno jen zpola: {0}. V tomto stavu snímky pravděpodobně nevznikají. Ovládací prvky zůstávají použitelné, poté je ale třeba ověřit, zda bod skutečně vznikl. Obvyklou opravou je „sfc /scannow“ s právy správce.'
+    logNoPitr  = 'Tento systém Windows obnovení k určitému okamžiku nezná - vše, co zapisuje, je vypnuto.'
     capEdition = 'Edice Windows:'
     capLast    = 'Poslední spuštění:'
     capNext    = 'Příští spuštění:'
@@ -1654,6 +1753,16 @@ uk = @{
     tipUpdate  = 'Відкриває сторінку завантаження в браузері. Нічого не завантажується та не встановлюється автоматично.'
 
     grpState   = 'Поточний стан'
+    capSupport = 'Відновлення на момент часу:'
+    supOk      = 'підтримується цією системою Windows'
+    supPart    = 'встановлено неповно'
+    supNone    = 'у цій системі Windows відсутнє'
+    supComp    = 'компонент {0}'
+    supMissCom = 'компонент знімків не зареєстровано'
+    supMissTask= 'заплановане завдання PITRTask відсутнє'
+    noteSupNone= 'Ця система Windows не містить відновлення на момент часу: немає ані компонента знімків, ані запланованого завдання PITRTask. Функція потрапляє до наявних збірок і через накопичувальне оновлення, тож самий лише номер збірки нічого не вирішує - оновлення, що очікує, ще може її принести. До того часу все, що налаштовується в цьому вікні, залишається без наслідків; тому все, що записує, вимкнено. Читання та копіювання стану залишаються доступними.'
+    noteSupPart= 'Відновлення на момент часу присутнє тут лише наполовину: {0}. У такому стані знімки, найімовірніше, не створюються. Елементи керування залишаються доступними, але потім слід перевірити, чи справді виник пункт. Звичайним способом виправлення є «sfc /scannow» з правами адміністратора.'
+    logNoPitr  = 'Ця система Windows не знає відновлення на момент часу - усе, що записує, вимкнено.'
     capEdition = 'Редакція Windows:'
     capLast    = 'Останній запуск:'
     capNext    = 'Наступний запуск:'
@@ -2172,6 +2281,47 @@ function Get-WinReState {
     return $null
 }
 
+# Ob dieses Windows die Zeitpunktwiederherstellung ueberhaupt mitbringt, entscheidet nicht
+# die Buildnummer: Die Funktion kommt auch per kumulativem Update in bestehende Builds.
+# Auf dem Rechner, auf dem diese Fassung entstand, traegt die Komponente 10.0.26100.8875
+# und liegt in einem System mit Build 26200 - zwei Rechner mit derselben Buildnummer
+# koennen sich also durchaus unterscheiden. Gefragt wird deshalb nach dem Bestandteil
+# selbst und nicht nach einer Zahl:
+#   Com  - die COM-Klasse, unter der die Aufgabe den Bestandteil aufruft. Wo dessen Datei
+#          liegt, steht im selben Eintrag und wird nicht geraten; fehlt die Datei trotz
+#          Eintrag, zaehlt der Eintrag nicht.
+#   Task - die Aufgabe \Microsoft\Windows\Setup\PITRTask, die ihn im Takt aufruft.
+# Beides vorhanden: unterstuetzt. Keins von beiden: dieses Windows kennt die Funktion
+# nicht. Nur eines von beiden: vorhanden, aber unvollstaendig - das ist etwas anderes als
+# "nicht unterstuetzt" und wird deshalb auch anders benannt und anders behandelt.
+function Get-PitrSupport {
+    param($Task)
+    $dll = ''
+    try {
+        $dll = [string](Get-ItemProperty -LiteralPath "$PitrClsid\InprocServer32" `
+                                         -ErrorAction Stop).'(default)'
+    } catch { }
+    $com = -not [string]::IsNullOrWhiteSpace($dll)
+    $ver = ''
+    if ($com) {
+        $file = [Environment]::ExpandEnvironmentVariables($dll)
+        if (Test-Path -LiteralPath $file) {
+            # "10.0.26100.8875 (WinBuild.160101.0800)" - der Klammerzusatz steht so an
+            # jeder Windows-Datei und sagt hier nichts, also faellt er weg.
+            try {
+                $fv = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($file).FileVersion
+                $ver = ([string]$fv -split ' ')[0]
+            } catch { }
+        } else {
+            $com = $false
+        }
+    }
+    $t = if ($PSBoundParameters.ContainsKey('Task')) { $Task } else { Get-TaskRead $TaskPath $TaskName }
+    $hasTask = $null -ne $t
+    $level = if ($com -and $hasTask) { 'ok' } elseif ($com -or $hasTask) { 'partial' } else { 'none' }
+    return [pscustomobject]@{ Com = $com; Task = $hasTask; Version = $ver; File = $dll; Level = $level }
+}
+
 # --------------------------------------------------------------- User interface --
 $xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -2256,6 +2406,15 @@ $xaml = @'
       </WrapPanel>
     </Grid>
 
+    <!-- Steht vor allem anderen, weil es alles andere entwertet: Bringt dieses Windows
+         die Funktion nicht mit, ist jede Angabe darunter gegenstandslos. Rot wie die
+         Warnung zur Wiederherstellungsumgebung - beides heisst, dass dieses Fenster
+         sonst folgenlos bleibt. -->
+    <Border x:Name="BoxSupport" BorderBrush="#E3B4B4" BorderThickness="1" Background="#FDF0F0"
+            Padding="8,6" Margin="0,0,0,10" Visibility="Collapsed">
+      <TextBlock x:Name="TxtSupportNote" TextWrapping="Wrap" Foreground="#8A2C2C" FontSize="12"/>
+    </Border>
+
     <!-- Der Schnappschuss steht bewusst oben und nicht bei den uebrigen Knoepfen am
          Fuss: Er ist die einzige Aktion, die ohne jede Einstellung auskommt, und fuer
          viele der einzige Grund, das Werkzeug ueberhaupt zu oeffnen. Die Erklaerung
@@ -2332,26 +2491,31 @@ $xaml = @'
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
-          <TextBlock x:Name="CapEdition" Grid.Row="0" Grid.Column="0" Margin="0,0,10,2"/>
-          <TextBlock x:Name="TxtEdition" Grid.Row="0" Grid.Column="1" Text="-" Margin="0,0,0,2" TextWrapping="Wrap"/>
-          <TextBlock x:Name="CapLast" Grid.Row="1" Grid.Column="0" Margin="0,0,10,2"/>
-          <TextBlock x:Name="TxtLast" Grid.Row="1" Grid.Column="1" Text="-" Margin="0,0,0,2"/>
-          <TextBlock x:Name="CapNext" Grid.Row="2" Grid.Column="0" Margin="0,0,10,2"/>
-          <TextBlock x:Name="TxtNext" Grid.Row="2" Grid.Column="1" Text="-" Margin="0,0,0,2" TextWrapping="Wrap"/>
-          <TextBlock x:Name="CapDelta" Grid.Row="3" Grid.Column="0" Margin="0,0,10,2"/>
-          <TextBlock x:Name="TxtDelta" Grid.Row="3" Grid.Column="1" Text="-" Margin="0,0,0,2" TextWrapping="Wrap"/>
-          <TextBlock x:Name="CapTaskState" Grid.Row="4" Grid.Column="0" Margin="0,0,10,2"/>
-          <TextBlock x:Name="TxtTaskState" Grid.Row="4" Grid.Column="1" Text="-" Margin="0,0,0,2" TextWrapping="Wrap"/>
+          <!-- Steht vor der Edition, weil die Frage davor kommt: Kennt dieses Windows die
+               Funktion ueberhaupt? Erst danach lohnt die Frage, welche Edition es ist. -->
+          <TextBlock x:Name="CapSupport" Grid.Row="0" Grid.Column="0" Margin="0,0,10,2"/>
+          <TextBlock x:Name="TxtSupport" Grid.Row="0" Grid.Column="1" Text="-" Margin="0,0,0,2" TextWrapping="Wrap"/>
+          <TextBlock x:Name="CapEdition" Grid.Row="1" Grid.Column="0" Margin="0,0,10,2"/>
+          <TextBlock x:Name="TxtEdition" Grid.Row="1" Grid.Column="1" Text="-" Margin="0,0,0,2" TextWrapping="Wrap"/>
+          <TextBlock x:Name="CapLast" Grid.Row="2" Grid.Column="0" Margin="0,0,10,2"/>
+          <TextBlock x:Name="TxtLast" Grid.Row="2" Grid.Column="1" Text="-" Margin="0,0,0,2"/>
+          <TextBlock x:Name="CapNext" Grid.Row="3" Grid.Column="0" Margin="0,0,10,2"/>
+          <TextBlock x:Name="TxtNext" Grid.Row="3" Grid.Column="1" Text="-" Margin="0,0,0,2" TextWrapping="Wrap"/>
+          <TextBlock x:Name="CapDelta" Grid.Row="4" Grid.Column="0" Margin="0,0,10,2"/>
+          <TextBlock x:Name="TxtDelta" Grid.Row="4" Grid.Column="1" Text="-" Margin="0,0,0,2" TextWrapping="Wrap"/>
+          <TextBlock x:Name="CapTaskState" Grid.Row="5" Grid.Column="0" Margin="0,0,10,2"/>
+          <TextBlock x:Name="TxtTaskState" Grid.Row="5" Grid.Column="1" Text="-" Margin="0,0,0,2" TextWrapping="Wrap"/>
           <!-- Der Knopf steht in der Zeile, zu der er gehoert, und nicht unten bei den
                uebrigen: Er handelt von der Umgebung, deren Zustand daneben steht. -->
           <!-- Der Knopf macht diese Zeile hoeher als die vier darueber. Damit das nicht
                schief aussieht, wird die Beschriftung mittig gesetzt statt oben, und der
                Knopf bleibt flach: 21 Pixel sind gerade genug fuer die Schrift und lassen
                die Zeile nur wenig wachsen. -->
-          <TextBlock x:Name="CapWinRE" Grid.Row="5" Grid.Column="0" Margin="0,0,10,0"
+          <TextBlock x:Name="CapWinRE" Grid.Row="6" Grid.Column="0" Margin="0,0,10,0"
                      VerticalAlignment="Center"/>
-          <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
+          <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal">
             <TextBlock x:Name="TxtWinRE" Text="-" VerticalAlignment="Center" TextWrapping="Wrap"/>
             <Button x:Name="BtnWinRE" Height="21" Padding="9,0" Margin="12,0,0,0" FontSize="11"
                     VerticalAlignment="Center"/>
@@ -2735,6 +2899,7 @@ function Apply-Language {
     }
 
     $ctl.GrpState.Header  = T 'grpState'
+    $ctl.CapSupport.Text  = T 'capSupport'
     $ctl.CapEdition.Text  = T 'capEdition'
     $ctl.CapLast.Text     = T 'capLast'
     $ctl.CapNext.Text      = T 'capNext'
@@ -2853,6 +3018,34 @@ function Update-View {
     if ($osParts.Count) { $edTxt += '  —  ' + ($osParts -join ', ') }
     $ctl.TxtEdition.Text = $edTxt
 
+    # --- Bringt dieses Windows die Funktion ueberhaupt mit? ---
+    # Die Aufgabe wird hier einmal gelesen und weiter unten wiederverwendet: Sie ist
+    # zugleich die eine Haelfte des Befunds und die Quelle der Laufzeiten.
+    $task = Get-TaskRead $TaskPath $TaskName
+    $sup  = Get-PitrSupport -Task $task
+    $script:NoPitr = ($sup.Level -eq 'none')
+    if ($sup.Level -eq 'ok') {
+        $supTxt = T 'supOk'
+        if ($sup.Version) { $supTxt += '  ·  ' + ((T 'supComp') -f $sup.Version) }
+        $ctl.TxtSupport.Text = $supTxt
+        $ctl.TxtSupport.Foreground = [System.Windows.Media.Brushes]::Black
+        $ctl.BoxSupport.Visibility = 'Collapsed'
+    } else {
+        $ctl.TxtSupport.Foreground = New-Object System.Windows.Media.SolidColorBrush (
+            [System.Windows.Media.ColorConverter]::ConvertFromString('#B02A2A'))
+        if ($sup.Level -eq 'partial') {
+            $miss = @()
+            if (-not $sup.Com)  { $miss += T 'supMissCom' }
+            if (-not $sup.Task) { $miss += T 'supMissTask' }
+            $ctl.TxtSupport.Text     = T 'supPart'
+            $ctl.TxtSupportNote.Text = (T 'noteSupPart') -f ($miss -join ', ')
+        } else {
+            $ctl.TxtSupport.Text     = T 'supNone'
+            $ctl.TxtSupportNote.Text = T 'noteSupNone'
+        }
+        $ctl.BoxSupport.Visibility = 'Visible'
+    }
+
     # --- Restore points ---
     $punkte = @(Get-RestorePoints)
     $ctl.LstPoints.ItemsSource = $punkte
@@ -2881,7 +3074,7 @@ function Update-View {
     try {
         # Zustand, Laufzeiten und ausgefallene Laeufe haengen bei COM alle am selben
         # Objekt - der frueher noetige zweite Aufruf (Get-ScheduledTaskInfo) entfaellt.
-        $task = Get-TaskRead $TaskPath $TaskName
+        # $task steht bereits oben fest, die Unterstuetzungspruefung braucht es ebenfalls.
         if ($null -eq $task) { throw 'PITRTask not found' }
         $ctl.TxtLast.Text = Format-Stamp $task.LastRunTime
 
@@ -3077,6 +3270,7 @@ function Get-StateReport {
     [void]$out.AppendLine((Get-Date).ToString('u'))
     [void]$out.AppendLine('')
     foreach ($row in @(
+        @{ C = $ctl.CapSupport.Text;  V = $ctl.TxtSupport.Text }
         @{ C = $ctl.CapEdition.Text;  V = $ctl.TxtEdition.Text }
         @{ C = $ctl.CapLast.Text;     V = $ctl.TxtLast.Text }
         @{ C = $ctl.CapNext.Text;     V = $ctl.TxtNext.Text }
@@ -3084,6 +3278,12 @@ function Get-StateReport {
         @{ C = $ctl.CapTaskState.Text;V = $ctl.TxtTaskState.Text }
         @{ C = $ctl.CapWinRE.Text;    V = $ctl.TxtWinRE.Text })) {
         [void]$out.AppendLine(('{0,-28} {1}' -f $row.C, $row.V))
+    }
+    # Fehlt die Funktion, ist der ganze Bericht nur deshalb interessant - dann gehoert
+    # die Begruendung hinein und nicht bloss das Wort "nicht vorhanden".
+    if ($ctl.BoxSupport.Visibility -eq 'Visible') {
+        [void]$out.AppendLine('')
+        [void]$out.AppendLine($ctl.TxtSupportNote.Text)
     }
     [void]$out.AppendLine('')
     [void]$out.AppendLine("$(T 'grpPoints'): $($ctl.TxtPoints.Text)  ·  $($ctl.TxtOldest.Text)")
@@ -3321,6 +3521,17 @@ function Set-Busy {
                  'ChkAuto','CmbAutoDelay','BtnAutoUpd','BtnIdleChk') +
                @($LangCodes | ForEach-Object { 'BtnLang' + $_.ToUpper() })
     foreach ($b in $buttons) { $ctl[$b].IsEnabled = -not $On }
+    # Fehlt die Funktion im System, bleiben die schreibenden Bedienelemente aus - auch
+    # nach jeder Aktion, die Set-Busy sonst wieder freigibt. Sie hinterliessen sonst
+    # Werte, die niemand liest. Lesen, Sprache und "Zustand kopieren" bleiben nutzbar:
+    # genau das braucht, wer nachfragen will, warum nichts da ist.
+    # Nur bei 'none', nicht schon bei 'partial': Dort ist nachweislich ein Teil vorhanden,
+    # und eine Fehleinschaetzung darf das Werkzeug nicht lahmlegen.
+    if (-not $On -and $script:NoPitr) {
+        foreach ($b in 'BtnSnapNow', 'BtnReset', 'BtnApply', 'BtnApplyNow', 'ChkAuto', 'CmbAutoDelay') {
+            $ctl[$b].IsEnabled = $false
+        }
+    }
     $window.Cursor = if ($On) { [System.Windows.Input.Cursors]::Wait } else { $null }
     Update-Ui
 }
@@ -3533,7 +3744,7 @@ Apply-Language
 
 # Die Felder tragen bis zur ersten Abfrage einen Platzhalter. "-" waere hier falsch:
 # Das sieht nach einer Auskunft aus, obwohl noch gar nichts gelesen wurde.
-foreach ($n in 'TxtEdition','TxtLast','TxtNext','TxtDelta','TxtTaskState','TxtWinRE',
+foreach ($n in 'TxtSupport','TxtEdition','TxtLast','TxtNext','TxtDelta','TxtTaskState','TxtWinRE',
                'TxtPoints','TxtOldest','TxtStorage') {
     $ctl[$n].Text = T 'loading'
 }
@@ -3577,7 +3788,9 @@ $window.Add_ContentRendered({
             Set-Busy $false
         }
         if (-not (Test-Admin)) { Write-Log (T 'logNoAdmin') }
-        Write-Log (T 'logReady')
+        # "Bereit" verspricht, dass geschriebene Werte Vorrang haben. Kennt dieses Windows
+        # die Funktion gar nicht, waere das gelogen - dann steht dort etwas anderes.
+        if ($script:NoPitr) { Write-Log (T 'logNoPitr') } else { Write-Log (T 'logReady') }
         try { $window.UpdateLayout() } catch { }
     }
     try {
@@ -3813,6 +4026,16 @@ if ($Apply) {
         $wanted[$key] = $val
     }
 
+    # Dieselbe Pruefung wie im Fenster, hier aber nur als Hinweis und nicht als Abbruch:
+    # Ein Startskript, das diesen Aufruf schon enthaelt, soll nicht ploetzlich scheitern,
+    # falls die Erkennung sich einmal irrt. Wer die Zeile liest, weiss trotzdem Bescheid.
+    $sup = Get-PitrSupport
+    if ($sup.Level -ne 'ok') {
+        Write-Host ("pitr-config: WARNING - point-in-time restore looks {0} on this system (com={1}, task={2})." -f
+                    $sup.Level, $sup.Com, $sup.Task)
+        Write-Host '  Values written here may end up with nothing to read them.'
+    }
+
     if ($doStatus) {
         Write-Host "pitr-config $Version"
         foreach ($k in @('active', 'freq', 'reten', 'size')) {
@@ -3884,6 +4107,9 @@ if ($SelfTest) {
         Write-Host "  Leerlauf-Teil : $(T 'idlePartial')"
         Write-Host "  WinRE        : $($ctl.CapWinRE.Text) $($ctl.TxtWinRE.Text) [$($ctl.BtnWinRE.Content)]"
         Write-Host "  WinRE-Warnung: $($ctl.TxtWinReNote.Text)"
+        Write-Host "  Funktion     : $($ctl.CapSupport.Text) $($ctl.TxtSupport.Text)"
+        Write-Host "  Fehlt ganz   : $(T 'supNone') - $(T 'noteSupNone')"
+        Write-Host "  Fehlt halb   : $(T 'supPart') - $((T 'noteSupPart') -f ((T 'supMissCom') + ', ' + (T 'supMissTask')))"
         Write-Host "  Kopierknopf  : $($ctl.BtnCopy.Content) - $($ctl.TxtCopyHint.Text)"
         Write-Host "  Knoepfe      : $($ctl.BtnReset.Content) | $($ctl.BtnRefresh.Content) | $($ctl.BtnApply.Content) | $($ctl.BtnApplyNow.Content)"
         Write-Host "  $($ctl.TxtPoints.Text)"

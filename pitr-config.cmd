@@ -169,7 +169,7 @@ $ErrorActionPreference = 'Stop'
 # The one place the version is defined. It appears under the headline in the window
 # and in the selftest; a release is tagged with "v" followed by this value. Keeping
 # it out of the batch header above avoids having two numbers that can drift apart.
-$Version  = '1.8.1'
+$Version  = '1.8.2'
 
 # Asked on start unless PITR_NOUPDATE is set. Returns the newest release of the project.
 $UpdateApi = 'https://api.github.com/repos/henmedia/windows-pitr-config/releases/latest'
@@ -327,6 +327,7 @@ en = @{
     unitDays   = 'days'
     unitMin    = 'minutes'
     unitMin1   = 'minute'
+    unitSecShort = 's'
     unitMinShort = 'min'
     unitHourShort = 'h'
 
@@ -496,6 +497,7 @@ de = @{
     unitDays   = 'Tage'
     unitMin    = 'Minuten'
     unitMin1   = 'Minute'
+    unitSecShort = 'Sek.'
     unitMinShort = 'Min.'
     unitHourShort = 'Std.'
 
@@ -663,6 +665,7 @@ nl = @{
     unitDays   = 'dagen'
     unitMin    = 'minuten'
     unitMin1   = 'minuut'
+    unitSecShort = 'sec.'
     unitMinShort = 'min'
     unitHourShort = 'u.'
 
@@ -834,6 +837,7 @@ fr = @{
     unitDays   = 'jours'
     unitMin    = 'minutes'
     unitMin1   = 'minute'
+    unitSecShort = 's'
     unitMinShort = 'min'
     unitHourShort = 'h'
 
@@ -1001,6 +1005,7 @@ es = @{
     unitDays   = 'días'
     unitMin    = 'minutos'
     unitMin1   = 'minuto'
+    unitSecShort = 's'
     unitMinShort = 'min'
     unitHourShort = 'h'
 
@@ -1168,6 +1173,7 @@ pt = @{
     unitDays   = 'dias'
     unitMin    = 'minutos'
     unitMin1   = 'minuto'
+    unitSecShort = 's'
     unitMinShort = 'min'
     unitHourShort = 'h'
 
@@ -1336,6 +1342,7 @@ it = @{
     unitDays   = 'giorni'
     unitMin    = 'minuti'
     unitMin1   = 'minuto'
+    unitSecShort = 's'
     unitMinShort = 'min'
     unitHourShort = 'h'
 
@@ -1506,6 +1513,7 @@ pl = @{
     unitDays   = 'dni'
     unitMin    = 'min'
     unitMin1   = 'min'
+    unitSecShort = 's'
     unitMinShort = 'min'
     unitHourShort = 'godz.'
 
@@ -1673,6 +1681,7 @@ cs = @{
     unitDays   = 'dní'
     unitMin    = 'minut'
     unitMin1   = 'minuta'
+    unitSecShort = 's'
     unitMinShort = 'min'
     unitHourShort = 'h'
 
@@ -1840,6 +1849,7 @@ uk = @{
     unitDays   = 'днів'
     unitMin    = 'хвилин'
     unitMin1   = 'хвилина'
+    unitSecShort = 'с'
     unitMinShort = 'хв'
     unitHourShort = 'год'
 
@@ -1984,18 +1994,19 @@ function Format-Duration {
 # der Region, dasselbe wie in der Punkteliste. 'G' und nicht 'g': Das kurze Format laesst
 # die Sekunden weg, und die werden gebraucht, sobald jemand einen Punkt oder einen Lauf
 # einem Eintrag im Aufgabenplaner zuordnen will.
-# Sekunden mit einer Nachkommastelle, ab einer Minute als m:ss. Die Zahl selbst folgt ueber
-# ToString der Region des Nutzers. Die Einheiten stehen dagegen fest als "s" und "min" - die
-# SI-Kuerzel, sprachunabhaengig gueltig. Format-Age nimmt dafuer die uebersetzten Kuerzel
-# (unitMinShort/unitHourShort), die beiden Spalten sind darin also nicht einheitlich: auf
-# Deutsch steht "37 Min." beim Alter und "1:35 min" bei der Dauer, auf Ukrainisch "год/хв"
-# gegen "s/min".
+# Sekunden mit einer Nachkommastelle, ab einer Minute als m:ss. Zahl UND Einheit folgen der
+# Sprache: die Zahl ueber ToString der Region, die Kuerzel ueber unitSecShort und
+# unitMinShort - dieselben, aus denen Format-Age gleich darunter die Spalte Alter baut.
+# Frueher standen hier feste "s" und "min", begruendet damit, dass das ueberall dieselbe
+# Abkuerzung sei. Das stimmte nicht: Neben "37 Min." in der Nachbarspalte ergab es zwei
+# Kuerzel fuer dieselbe Einheit, auf Ukrainisch sogar zwei Schriften nebeneinander.
 function Format-Elapsed {
     param([double]$Seconds)
-    if ($Seconds -lt 60) { return $Seconds.ToString('0.0') + ' s' }
+    if ($Seconds -lt 60) { return $Seconds.ToString('0.0') + ' ' + (T 'unitSecShort') }
     # Floor und nicht [int]: Die Umwandlung nach [int] RUNDET in PowerShell, aus 95,4
     # Sekunden wuerden damit 2:35 statt 1:35 - und aus 119,7 sogar 1:60.
-    return ('{0}:{1:00} min' -f [math]::Floor($Seconds / 60), [math]::Floor($Seconds % 60))
+    return ('{0}:{1:00} {2}' -f [math]::Floor($Seconds / 60), [math]::Floor($Seconds % 60),
+                                (T 'unitMinShort'))
 }
 
 function Format-Stamp {

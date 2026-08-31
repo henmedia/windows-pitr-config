@@ -4,6 +4,25 @@ Notable changes are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] — 2026-08-31
+
+### Fixed
+
+- The *Duration* column used a fixed `s` and `min` while the *Age* column right beside it used
+  the translated abbreviations. Two spellings of the same unit ended up next to each other: in
+  German "37 Min." against "1:35 min", and in Ukrainian two different scripts, "37 хв" against
+  "1:35 min". Both columns now take their abbreviation from the same place, and every language
+  gained one for seconds — `s` in most, `Sek.` in German, `sec.` in Dutch, `с` in Ukrainian.
+
+  The comment in the code had justified the fixed units by claiming `s` and `min` are the same
+  abbreviation in every language. That was already untrue for German, long before Ukrainian was
+  added.
+
+- Three comments still counted seven languages. The batch header was corrected in 1.8.1; the
+  same stale count sat twice more in the PowerShell part — in the docstring's language list and
+  in the note explaining why the recovery environment's state is read from `ReAgent.xml` rather
+  than from translated `reagentc` output.
+
 ## [1.8.1] — 2026-08-31
 
 A patch rather than a minor version. On a Windows without point-in-time restore the window

@@ -135,7 +135,7 @@ exit /b %errorlevel%
 #___PSCODE___
 <#
     Point-in-time restore (PITR) / Zeitpunktwiederherstellung
-    Graphical configuration tool in EN, DE, FR, ES, PT, IT and PL.
+    Graphical configuration tool in EN, DE, NL, FR, ES, PT, IT, PL, UK and CS.
     Also drivable from the command line:  pitr-config.cmd apply freq=4h reten=5d
 
     The PITR engine reads its configuration from
@@ -1984,9 +1984,12 @@ function Format-Duration {
 # der Region, dasselbe wie in der Punkteliste. 'G' und nicht 'g': Das kurze Format laesst
 # die Sekunden weg, und die werden gebraucht, sobald jemand einen Punkt oder einen Lauf
 # einem Eintrag im Aufgabenplaner zuordnen will.
-# Sekunden mit einer Nachkommastelle, ab einer Minute als m:ss. Die Einheiten bleiben
-# als "s" und "min" stehen: Beides ist in allen sieben Sprachen dieselbe Abkuerzung,
-# die Zahl selbst folgt ueber ToString der Region des Nutzers.
+# Sekunden mit einer Nachkommastelle, ab einer Minute als m:ss. Die Zahl selbst folgt ueber
+# ToString der Region des Nutzers. Die Einheiten stehen dagegen fest als "s" und "min" - die
+# SI-Kuerzel, sprachunabhaengig gueltig. Format-Age nimmt dafuer die uebersetzten Kuerzel
+# (unitMinShort/unitHourShort), die beiden Spalten sind darin also nicht einheitlich: auf
+# Deutsch steht "37 Min." beim Alter und "1:35 min" bei der Dauer, auf Ukrainisch "год/хв"
+# gegen "s/min".
 function Format-Elapsed {
     param([double]$Seconds)
     if ($Seconds -lt 60) { return $Seconds.ToString('0.0') + ' s' }
@@ -2231,7 +2234,7 @@ function Get-ShadowStorage {
 # Windows. Ist die abgeschaltet - nach missglueckten Updates keine Seltenheit, siehe
 # KB5034441 -, sammelt das Werkzeug Punkte, an die im Ernstfall niemand herankommt.
 # Gelesen wird ReAgent.xml und nicht die Ausgabe von "reagentc /info": die ist
-# uebersetzt und damit in sieben Sprachen verschieden, die Datei ist es nicht.
+# uebersetzt und damit in zehn Sprachen verschieden, die Datei ist es nicht.
 # InstallState 1 = eingerichtet. Faellt irgendetwas davon aus, gibt es $null und die
 # Oberflaeche schreibt "nicht ermittelbar" - lieber keine Aussage als eine falsche.
 function Get-WinReState {

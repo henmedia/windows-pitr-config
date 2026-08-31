@@ -6,6 +6,22 @@ Notable changes are recorded here. The format follows
 
 ## [1.8.2] — 2026-08-31
 
+### Changed
+
+- The four settings sit in two columns instead of four rows, which takes about 135 pixels off
+  the window — a tenth of its full height. The window grew 110 pixels wider in exchange, which
+  is the cheaper of the two: height is what runs out on a laptop screen, width is not.
+
+  Six grid rows rather than two panels side by side, so both columns share the same rows and
+  the drop-downs stay level even when a caption wraps. The column width follows the longest
+  caption across all ten languages — "Aufbewahrung — Lebensdauer eines
+  Wiederherstellungspunkts" at 375 px — which is what sets the window at 900: it leaves 393 px
+  per column, 18 to spare. Checked in every language by measuring the captions' rendered
+  height, so a wrap would show up as a number rather than something to spot by eye.
+
+- The *Status* column of the restore point list grew from 190 to 250 pixels, using some of the
+  new width. "unknown (needs admin rights)" was cut off there in several languages.
+
 ### Fixed
 
 - The *Duration* column used a fixed `s` and `min` while the *Age* column right beside it used

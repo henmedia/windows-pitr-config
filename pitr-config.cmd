@@ -2340,7 +2340,7 @@ function Get-PitrSupport {
 $xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Width="790" Height="800" MinWidth="720" MinHeight="440"
+        Width="900" Height="800" MinWidth="800" MinHeight="440"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize" Background="#F5F5F5"
         FontFamily="Segoe UI" FontSize="13">
@@ -2636,7 +2636,7 @@ $xaml = @'
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
-              <GridViewColumn Width="190" DisplayMemberBinding="{Binding Status}"/>
+              <GridViewColumn Width="250" DisplayMemberBinding="{Binding Status}"/>
               <GridViewColumn Width="110" DisplayMemberBinding="{Binding Version}"/>
             </GridView>
           </ListView.View>
@@ -2659,24 +2659,47 @@ $xaml = @'
       </StackPanel>
     </GroupBox>
 
+    <!-- Vier Einstellungen in zwei Spalten statt vier untereinander: Das spart in der
+         Hoehe rund die Haelfte dieser Gruppe, und Breite ist hier das billigere Gut.
+         Sechs Zeilen und nicht zwei nebeneinanderliegende StackPanels: Bricht eine
+         Beschriftung um, verschoebe sie sonst ihre Spalte gegen die andere, und die
+         Comboboxen staenden versetzt. So teilen sich beide Spalten dieselben Zeilen.
+         Die Spaltenbreite richtet sich nach der laengsten Beschriftung ueber alle zehn
+         Sprachen: "Aufbewahrung - Lebensdauer eines Wiederherstellungspunkts" misst
+         375 Pixel in Segoe UI 13 SemiBold. Bei 900 Pixel Fensterbreite bleiben 393 je
+         Spalte, also 18 Reserve; darunter faengt der Text an umzubrechen. -->
     <GroupBox x:Name="GrpSet" Padding="9" Margin="0,0,0,10">
-      <StackPanel>
-        <TextBlock x:Name="CapActive" FontWeight="SemiBold"/>
-        <ComboBox x:Name="CmbActive" Margin="0,3,0,2"/>
-        <TextBlock x:Name="LblActive" Foreground="#666" FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap"/>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="24"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <TextBlock x:Name="CapFreq" FontWeight="SemiBold"/>
-        <ComboBox x:Name="CmbFreq" Margin="0,3,0,2"/>
-        <TextBlock x:Name="LblFreq" Foreground="#666" FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap"/>
+        <TextBlock x:Name="CapActive" Grid.Row="0" Grid.Column="0" FontWeight="SemiBold" TextWrapping="Wrap"/>
+        <ComboBox  x:Name="CmbActive" Grid.Row="1" Grid.Column="0" Margin="0,3,0,2"/>
+        <TextBlock x:Name="LblActive" Grid.Row="2" Grid.Column="0" Foreground="#666" FontSize="11" TextWrapping="Wrap"/>
 
-        <TextBlock x:Name="CapReten" FontWeight="SemiBold"/>
-        <ComboBox x:Name="CmbReten" Margin="0,3,0,2"/>
-        <TextBlock x:Name="LblReten" Foreground="#666" FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap"/>
+        <TextBlock x:Name="CapFreq"   Grid.Row="0" Grid.Column="2" FontWeight="SemiBold" TextWrapping="Wrap"/>
+        <ComboBox  x:Name="CmbFreq"   Grid.Row="1" Grid.Column="2" Margin="0,3,0,2"/>
+        <TextBlock x:Name="LblFreq"   Grid.Row="2" Grid.Column="2" Foreground="#666" FontSize="11" TextWrapping="Wrap"/>
 
-        <TextBlock x:Name="CapSize" FontWeight="SemiBold"/>
-        <ComboBox x:Name="CmbSize" Margin="0,3,0,2"/>
-        <TextBlock x:Name="LblSize" Foreground="#666" FontSize="11" TextWrapping="Wrap"/>
-      </StackPanel>
+        <TextBlock x:Name="CapReten"  Grid.Row="3" Grid.Column="0" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,10,0,0"/>
+        <ComboBox  x:Name="CmbReten"  Grid.Row="4" Grid.Column="0" Margin="0,3,0,2"/>
+        <TextBlock x:Name="LblReten"  Grid.Row="5" Grid.Column="0" Foreground="#666" FontSize="11" TextWrapping="Wrap"/>
+
+        <TextBlock x:Name="CapSize"   Grid.Row="3" Grid.Column="2" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,10,0,0"/>
+        <ComboBox  x:Name="CmbSize"   Grid.Row="4" Grid.Column="2" Margin="0,3,0,2"/>
+        <TextBlock x:Name="LblSize"   Grid.Row="5" Grid.Column="2" Foreground="#666" FontSize="11" TextWrapping="Wrap"/>
+      </Grid>
     </GroupBox>
 
     <Grid Margin="0,0,0,10">

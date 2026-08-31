@@ -52,16 +52,17 @@ Notable changes are recorded here. The format follows
   stopped 28 px short of its content: a scroll bar for a remainder that had room to spare, and
   a strip below the last group that looked like wasted space.
 
-  It now measures the scroll viewer's extent, which includes the margins, and measures twice:
-  once the window is tall enough for the scroll bar to disappear, roughly 17 px of width come
+  It now takes the panel's height plus its margins — the scroll viewer's own `ExtentHeight`
+  looks like the authority but is not, see above — and measures twice: once the window is
+  tall enough for the scroll bar to disappear, roughly 17 px of width come
   free, a wrapping paragraph can lose a line, and the content ends up shorter than what was
   just measured — so the second pass is allowed to shrink as well as grow. Three passes cap
   it, two pixels is the threshold below which another correction is not worth making.
 
-  Arithmetic alone was not enough, though: on another machine a visibly larger strip was left
-  over than any calculation here reproduced. So the last step measures instead of computing.
-  Whatever room is left in the viewport below the content *is* the empty strip, no matter how
-  it came about — a margin, a scroll bar, a paragraph that re-wrapped — and it is subtracted,
+Arithmetic alone was not enough either, because a strip can also appear long after
+  startup — when a box at the top collapses, which is what the log box above now absorbs. The
+  last step of the fit therefore measures rather than computes: whatever room is left in the
+  viewport below the content *is* the empty strip, whatever produced it, and it is subtracted,
   keeping one pixel so a rounding error cannot bring the scroll bar back. Verified by forcing
   the window 60 px too tall: the step puts it back exactly, to within a pixel.
 

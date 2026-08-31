@@ -2375,7 +2375,7 @@ $xaml = @'
     </Style>
   </Window.Resources>
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="14">
+    <StackPanel Margin="14,14,14,6">
 
     <Grid Margin="0,0,0,8">
       <Grid.ColumnDefinitions>
@@ -3883,6 +3883,19 @@ $window.Add_ContentRendered({
             if ([math]::Abs($target - $window.ActualHeight) -lt 2) { break }
             $window.Height = $target
             $window.UpdateLayout()
+        }
+
+        # Zum Schluss nachmessen statt nachrechnen. Was im Sichtfenster unter dem Inhalt
+        # frei bleibt, IST der leere Streifen unten - egal, wodurch er entstanden ist:
+        # Randberechnung, Rollbalken, ein Absatz, der sich anders umbricht. Die Rechnung
+        # oben kann sich irren, diese Messung nicht, denn sie liest ab, was tatsaechlich
+        # da ist. Ein Pixel bleibt stehen, damit nicht wegen einer Rundung von Zehnteln
+        # doch wieder ein Rollbalken erscheint.
+        $window.UpdateLayout()
+        $rest = $sv.ViewportHeight - $sv.ExtentHeight - 1
+        if ($rest -gt 0) {
+            $kleiner = [math]::Max($window.MinHeight, [math]::Floor($window.ActualHeight - $rest))
+            if ($kleiner -lt $window.ActualHeight) { $window.Height = $kleiner }
         }
 
         # Neu mittig setzen: CenterScreen zentriert auf dem Bildschirm, nicht auf der

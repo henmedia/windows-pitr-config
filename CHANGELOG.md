@@ -42,10 +42,21 @@ Notable changes are recorded here. The format follows
   just measured — so the second pass is allowed to shrink as well as grow. Three passes cap
   it, two pixels is the threshold below which another correction is not worth making.
 
-  On a 1392 px work area the window now ends at 1282 px with no scroll bar, against 1254 px
-  with one before. Taken together with the two-column settings and the shorter log, the
-  content went from 1391 px — which did not fit this screen at all and was capped with a
-  scroll bar — to 1240 px, which fits with room left over.
+  Arithmetic alone was not enough, though: on another machine a visibly larger strip was left
+  over than any calculation here reproduced. So the last step measures instead of computing.
+  Whatever room is left in the viewport below the content *is* the empty strip, no matter how
+  it came about — a margin, a scroll bar, a paragraph that re-wrapped — and it is subtracted,
+  keeping one pixel so a rounding error cannot bring the scroll bar back. Verified by forcing
+  the window 60 px too tall: the step puts it back exactly, to within a pixel.
+
+  The content's bottom margin went from 14 px to 6. Fourteen matches the top and the sides,
+  but there is no next group under the last one — down there the margin carries nothing but
+  emptiness.
+
+  On a 1392 px work area the window now ends at 1272 px with no scroll bar and 0.9 px unused,
+  against 1254 px with a scroll bar and 25 px of content cut off before. Taken together with
+  the two-column settings and the shorter log, the content went from 1391 px — which did not
+  fit this screen at all — to 1232 px, which fits with room left over.
 
 - The column headers of the restore point list looked clickable and were not. *Time*, *Status*
   and *Build* used WPF's stock header, which is a button: it highlights under the pointer and

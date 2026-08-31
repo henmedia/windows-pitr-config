@@ -24,6 +24,22 @@ Notable changes are recorded here. The format follows
 
 ### Fixed
 
+- The column headers of the restore point list looked clickable and were not. *Time*, *Status*
+  and *Build* used WPF's stock header, which is a button: it highlights under the pointer and
+  depresses on click, promising a sort that has never existed. *Age* and *Duration* had looked
+  different since 1.7.1, where they were given their own template for the right alignment — the
+  inconsistency was the visible half of the problem, the false promise the other half. All five
+  now share one flat template, and none of them is a tab stop any more.
+
+  The empty column at the right edge was the filler header WPF always draws behind the last
+  column. It carried a vertical divider, which read as a further, empty column; now only the
+  bottom rule of the header row runs on to the edge.
+
+  One thing goes with it: columns can no longer be dragged wider, because the resize grip lives
+  in the stock header template. *Age* and *Duration* had already lost it in 1.7.1 for the same
+  reason. The widths are fixed and now fit their content — which is why *Status* was widened in
+  the same release.
+
 - The *Duration* column used a fixed `s` and `min` while the *Age* column right beside it used
   the translated abbreviations. Two spellings of the same unit ended up next to each other: in
   German "37 Min." against "1:35 min", and in Ukrainian two different scripts, "37 хв" against

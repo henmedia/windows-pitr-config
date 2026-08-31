@@ -2587,49 +2587,70 @@ $xaml = @'
               <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             </Style>
           </ListView.ItemContainerStyle>
+          <!-- Alle Spaltenkoepfe teilen sich eine Vorlage. Der Standardkopf von WPF ist ein
+               Knopf: Er hebt sich beim Ueberfahren hervor und laesst sich druecken, verspricht
+               also eine Sortierung, die es hier nicht gibt. Bisher hatten nur Alter und Dauer
+               eine eigene Vorlage - wegen der Rechtsbuendigkeit -, und genau daran fiel der
+               Widerspruch auf: drei Koepfe wirkten anklickbar, zwei nicht. Jetzt keiner.
+               Die Rolle "Padding" ist der Fuellkopf, den WPF hinter der letzten Spalte immer
+               mitzeichnet. Mit senkrechtem Strich sah er aus wie eine weitere, leere Spalte;
+               ohne ihn laeuft nur die Unterkante der Kopfzeile bis zum Rand durch. -->
+          <ListView.Resources>
+            <Style TargetType="GridViewColumnHeader">
+              <Setter Property="HorizontalContentAlignment" Value="Center"/>
+              <!-- Kein Tabstopp: Ein Kopf, der nichts tut, gehoert nicht in die Reihenfolge,
+                   die man sich mit der Tabulatortaste durch das Fenster erarbeitet. -->
+              <Setter Property="Focusable" Value="False"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="GridViewColumnHeader">
+                    <Border BorderBrush="#DDD" BorderThickness="0,0,1,1" Padding="6,2">
+                      <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+              <Style.Triggers>
+                <Trigger Property="Role" Value="Padding">
+                  <Setter Property="Template">
+                    <Setter.Value>
+                      <ControlTemplate TargetType="GridViewColumnHeader">
+                        <Border BorderBrush="#DDD" BorderThickness="0,0,0,1"/>
+                      </ControlTemplate>
+                    </Setter.Value>
+                  </Setter>
+                </Trigger>
+              </Style.Triggers>
+            </Style>
+            <!-- Zahlenspalten. Die 12 Pixel rechts sind nicht frei gewaehlt: Sie bringen den
+                 Kopf ueber den 6-Pixel-Rand der Zellen, sonst stuende er sichtbar daneben -
+                 der Standardkopf reserviert dort naemlich unsichtbaren Platz fuer den
+                 Ziehgriff, den Padding allein nicht erreicht. -->
+            <Style x:Key="RightHead" TargetType="GridViewColumnHeader">
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="GridViewColumnHeader">
+                    <Border BorderBrush="#DDD" BorderThickness="0,0,1,1" Padding="0,2,12,2">
+                      <ContentPresenter HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </Border>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+          </ListView.Resources>
           <ListView.View>
             <GridView>
               <GridViewColumn Width="172" DisplayMemberBinding="{Binding Zeitpunkt}"/>
               <!-- Alter und Dauer sind Zahlenwerte, deshalb rechtsbuendig - Kopf und
-                   Zelle gleichermassen, sonst wirkt die Spalte schief. Der eigentliche
-                   Grund, warum HorizontalContentAlignment allein nicht reichte: Der
-                   Standard-Spaltenkopf reserviert rechts unsichtbaren Platz fuer den
-                   Ziehgriff zum Verbreitern der Spalte, und Padding erreicht diesen
-                   Platz nicht - das Template ersetzt ihn komplett dagegen. -->
-              <GridViewColumn Width="90">
-                <GridViewColumn.HeaderContainerStyle>
-                  <Style TargetType="GridViewColumnHeader">
-                    <Setter Property="Template">
-                      <Setter.Value>
-                        <ControlTemplate TargetType="GridViewColumnHeader">
-                          <Border BorderBrush="#DDD" BorderThickness="0,0,1,1" Padding="0,2,12,2">
-                            <ContentPresenter HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                          </Border>
-                        </ControlTemplate>
-                      </Setter.Value>
-                    </Setter>
-                  </Style>
-                </GridViewColumn.HeaderContainerStyle>
+                   Zelle gleichermassen, sonst wirkt die Spalte schief. -->
+              <GridViewColumn Width="90" HeaderContainerStyle="{StaticResource RightHead}">
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
                     <TextBlock Text="{Binding Alter}" HorizontalAlignment="Right" Margin="0,0,6,0"/>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
-              <GridViewColumn Width="90">
-                <GridViewColumn.HeaderContainerStyle>
-                  <Style TargetType="GridViewColumnHeader">
-                    <Setter Property="Template">
-                      <Setter.Value>
-                        <ControlTemplate TargetType="GridViewColumnHeader">
-                          <Border BorderBrush="#DDD" BorderThickness="0,0,1,1" Padding="0,2,12,2">
-                            <ContentPresenter HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                          </Border>
-                        </ControlTemplate>
-                      </Setter.Value>
-                    </Setter>
-                  </Style>
-                </GridViewColumn.HeaderContainerStyle>
+              <GridViewColumn Width="90" HeaderContainerStyle="{StaticResource RightHead}">
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
                     <TextBlock Text="{Binding Dauer}" HorizontalAlignment="Right" Margin="0,0,6,0"/>

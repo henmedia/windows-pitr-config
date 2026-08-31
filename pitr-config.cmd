@@ -2645,8 +2645,8 @@ $xaml = @'
                    Ueberschrift, plus Rand. Zeitpunkt richtet sich nach dem US-Format mit
                    AM/PM (140 px) - die Zahlen folgen der Region des Nutzers, nicht der
                    Oberflaechensprache, also muss die laengste Region hineinpassen.
-                   Status brauchte 326: "desconocido (se requieren permisos de administrador)"
-                   auf Spanisch. Mit 250 war das abgeschnitten. -->
+                   Die ersten vier Spalten bekommen genau so viel, wie sie brauchen; was
+                   uebrig bleibt, faellt an Status ganz rechts. -->
               <GridViewColumn Width="156" DisplayMemberBinding="{Binding Zeitpunkt}"/>
               <!-- Alter und Dauer sind Zahlenwerte, deshalb rechtsbuendig - Kopf und
                    Zelle gleichermassen, sonst wirkt die Spalte schief. -->
@@ -2664,8 +2664,13 @@ $xaml = @'
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
-              <GridViewColumn Width="336" DisplayMemberBinding="{Binding Status}"/>
               <GridViewColumn Width="88" DisplayMemberBinding="{Binding Version}"/>
+              <!-- Status steht zuletzt: Er ist mit Abstand die breiteste Spalte, und als
+                   letzte traegt sie den Rest der Breite, statt die schmalen Spalten nach
+                   rechts zu schieben. Wird das Fenster auf seine Mindestbreite gezogen,
+                   reicht der Platz nicht mehr fuer alle Spalten - beschnitten wird dann
+                   diese hier, und nicht Build oder Dauer. -->
+              <GridViewColumn Width="336" DisplayMemberBinding="{Binding Status}"/>
             </GridView>
           </ListView.View>
         </ListView>
@@ -2747,7 +2752,7 @@ $xaml = @'
     <GroupBox x:Name="GrpLog" Padding="6">
       <StackPanel>
         <TextBox x:Name="TxtLog" IsReadOnly="True" TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Auto" Height="76"
+                 VerticalScrollBarVisibility="Auto" Height="60"
                  BorderThickness="1" BorderBrush="#DDD" Background="White"
                  Padding="6" FontFamily="Consolas" FontSize="12"/>
         <!-- Beim Protokoll und nicht bei den Knoepfen unten: Was hier herauskommt, ist
@@ -2982,8 +2987,8 @@ function Apply-Language {
     $cols[0].Header = T 'colTime'
     $cols[1].Header = T 'colAge'
     $cols[2].Header = T 'colDur'
-    $cols[3].Header = T 'colStatus'
-    $cols[4].Header = T 'colBuild'
+    $cols[3].Header = T 'colBuild'
+    $cols[4].Header = T 'colStatus'
     $ctl.TxtHistHint.Text = T 'histHint'
     $ctl.BtnHist.Content  = T 'btnHist'
 

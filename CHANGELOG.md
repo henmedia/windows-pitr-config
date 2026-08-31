@@ -19,6 +19,15 @@ Notable changes are recorded here. The format follows
   per column, 18 to spare. Checked in every language by measuring the captions' rendered
   height, so a wrap would show up as a number rather than something to spot by eye.
 
+- *Status* is the last column of the restore point list now, after *Build*. It is by far the
+  widest, and as the last one it carries the leftover width instead of pushing the narrow
+  columns to the right. It also fails better: pulled to its minimum width the window can no
+  longer show every column, and what gets cut off is now the status text rather than the build
+  number or the duration.
+
+- The log box is one line shorter, 76 px to 60. It scrolls, and nothing that matters lives in
+  the fourth line.
+
 ### Fixed
 
 - The column headers of the restore point list looked clickable and were not. *Time*, *Status*

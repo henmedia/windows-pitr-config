@@ -2640,25 +2640,32 @@ $xaml = @'
           </ListView.Resources>
           <ListView.View>
             <GridView>
-              <GridViewColumn Width="172" DisplayMemberBinding="{Binding Zeitpunkt}"/>
+              <!-- Die Breiten sind gemessen, nicht geschaetzt: je Spalte der breiteste Wert,
+                   der dort ueber alle zehn Sprachen auftreten kann, gegen die breiteste
+                   Ueberschrift, plus Rand. Zeitpunkt richtet sich nach dem US-Format mit
+                   AM/PM (140 px) - die Zahlen folgen der Region des Nutzers, nicht der
+                   Oberflaechensprache, also muss die laengste Region hineinpassen.
+                   Status brauchte 326: "desconocido (se requieren permisos de administrador)"
+                   auf Spanisch. Mit 250 war das abgeschnitten. -->
+              <GridViewColumn Width="156" DisplayMemberBinding="{Binding Zeitpunkt}"/>
               <!-- Alter und Dauer sind Zahlenwerte, deshalb rechtsbuendig - Kopf und
                    Zelle gleichermassen, sonst wirkt die Spalte schief. -->
-              <GridViewColumn Width="90" HeaderContainerStyle="{StaticResource RightHead}">
+              <GridViewColumn Width="82" HeaderContainerStyle="{StaticResource RightHead}">
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
                     <TextBlock Text="{Binding Alter}" HorizontalAlignment="Right" Margin="0,0,6,0"/>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
-              <GridViewColumn Width="90" HeaderContainerStyle="{StaticResource RightHead}">
+              <GridViewColumn Width="82" HeaderContainerStyle="{StaticResource RightHead}">
                 <GridViewColumn.CellTemplate>
                   <DataTemplate>
                     <TextBlock Text="{Binding Dauer}" HorizontalAlignment="Right" Margin="0,0,6,0"/>
                   </DataTemplate>
                 </GridViewColumn.CellTemplate>
               </GridViewColumn>
-              <GridViewColumn Width="250" DisplayMemberBinding="{Binding Status}"/>
-              <GridViewColumn Width="110" DisplayMemberBinding="{Binding Version}"/>
+              <GridViewColumn Width="336" DisplayMemberBinding="{Binding Status}"/>
+              <GridViewColumn Width="88" DisplayMemberBinding="{Binding Version}"/>
             </GridView>
           </ListView.View>
         </ListView>

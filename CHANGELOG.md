@@ -19,9 +19,6 @@ Notable changes are recorded here. The format follows
   per column, 18 to spare. Checked in every language by measuring the captions' rendered
   height, so a wrap would show up as a number rather than something to spot by eye.
 
-- The *Status* column of the restore point list grew from 190 to 250 pixels, using some of the
-  new width. "unknown (needs admin rights)" was cut off there in several languages.
-
 ### Fixed
 
 - The column headers of the restore point list looked clickable and were not. *Time*, *Status*
@@ -39,6 +36,14 @@ Notable changes are recorded here. The format follows
   in the stock header template. *Age* and *Duration* had already lost it in 1.7.1 for the same
   reason. The widths are fixed and now fit their content — which is why *Status* was widened in
   the same release.
+
+- The *Status* column of the restore point list cut its own text off. Measured across all ten
+  languages it needs 326 px — Spanish "desconocido (se requieren permisos de administrador)" is
+  the longest — and it had 250. All five column widths are now derived from a measurement
+  rather than an estimate: per column, the widest value that can appear in any language against
+  the widest heading, plus the padding. *Time* follows the US format with AM/PM, because dates
+  follow the user's region rather than the interface language, so the longest region has to fit.
+  The table ends up 744 px wide instead of 712, which the window carries without growing.
 
 - The *Duration* column used a fixed `s` and `min` while the *Age* column right beside it used
   the translated abbreviations. Two spellings of the same unit ended up next to each other: in

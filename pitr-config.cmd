@@ -3866,10 +3866,24 @@ $window.Add_ContentRendered({
     try {
         $sv     = $window.Content
         $panel  = $sv.Content
-        $chrome = $window.ActualHeight - $sv.ActualHeight
-        $need   = [math]::Ceiling($panel.ActualHeight + $chrome + 2)
-        $target = [math]::Min($window.MaxHeight, $need)
-        if ($target -gt $window.ActualHeight) { $window.Height = $target }
+        # ExtentHeight und nicht die Hoehe des StackPanels: Dessen Rand von 14 Pixeln liegt
+        # ausserhalb seiner ActualHeight, oben wie unten. Ohne diese 28 Pixel blieb das
+        # Fenster immer ein Stueck zu kurz und behielt einen Rollbalken fuer einen Rest, der
+        # bequem hineingepasst haette - unten sah es aus, als laege dort ungenutzter Platz.
+        #
+        # Zweimal gerechnet, nicht einmal, und die zweite Runde darf auch verkleinern:
+        # Verschwindet der Rollbalken, weil es jetzt passt, werden rund 17 Pixel Breite frei;
+        # ein umbrechender Absatz kommt dann mit einer Zeile weniger aus und der Inhalt wird
+        # kuerzer als eben gemessen. Drei Durchgaenge sind die Notbremse gegen ein Hin und
+        # Her, zwei Pixel die Schwelle, ab der sich Nachbessern nicht mehr lohnt.
+        for ($i = 0; $i -lt 3; $i++) {
+            $chrome = $window.ActualHeight - $sv.ActualHeight
+            $need   = [math]::Ceiling($sv.ExtentHeight + $chrome + 2)
+            $target = [math]::Min($window.MaxHeight, $need)
+            if ([math]::Abs($target - $window.ActualHeight) -lt 2) { break }
+            $window.Height = $target
+            $window.UpdateLayout()
+        }
 
         # Neu mittig setzen: CenterScreen zentriert auf dem Bildschirm, nicht auf der
         # Arbeitsflaeche, und die Hoehe hat sich seitdem geaendert.

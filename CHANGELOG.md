@@ -30,6 +30,23 @@ Notable changes are recorded here. The format follows
 
 ### Fixed
 
+- The window sized itself too short and kept a scroll bar it did not need. The height was
+  computed from the content panel's own height, but the panel carries a 14 px margin on every
+  side and those 28 vertical pixels sit outside that number. The window therefore always
+  stopped 28 px short of its content: a scroll bar for a remainder that had room to spare, and
+  a strip below the last group that looked like wasted space.
+
+  It now measures the scroll viewer's extent, which includes the margins, and measures twice:
+  once the window is tall enough for the scroll bar to disappear, roughly 17 px of width come
+  free, a wrapping paragraph can lose a line, and the content ends up shorter than what was
+  just measured — so the second pass is allowed to shrink as well as grow. Three passes cap
+  it, two pixels is the threshold below which another correction is not worth making.
+
+  On a 1392 px work area the window now ends at 1282 px with no scroll bar, against 1254 px
+  with one before. Taken together with the two-column settings and the shorter log, the
+  content went from 1391 px — which did not fit this screen at all and was capped with a
+  scroll bar — to 1240 px, which fits with room left over.
+
 - The column headers of the restore point list looked clickable and were not. *Time*, *Status*
   and *Build* used WPF's stock header, which is a button: it highlights under the pointer and
   depresses on click, promising a sort that has never existed. *Age* and *Duration* had looked

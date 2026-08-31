@@ -25,9 +25,6 @@ Notable changes are recorded here. The format follows
   longer show every column, and what gets cut off is now the status text rather than the build
   number or the duration.
 
-- The log box is one line shorter, 76 px to 60. It scrolls, and nothing that matters lives in
-  the fourth line.
-
 ### Fixed
 
 - The window sized itself too short and kept a scroll bar it did not need. The height was
@@ -53,10 +50,10 @@ Notable changes are recorded here. The format follows
   but there is no next group under the last one — down there the margin carries nothing but
   emptiness.
 
-  On a 1392 px work area the window now ends at 1272 px with no scroll bar and 0.9 px unused,
+  On a 1392 px work area the window now ends at 1288 px with no scroll bar and 0.9 px unused,
   against 1254 px with a scroll bar and 25 px of content cut off before. Taken together with
-  the two-column settings and the shorter log, the content went from 1391 px — which did not
-  fit this screen at all — to 1232 px, which fits with room left over.
+  the two-column settings the content went from 1375 px — which did not fit this screen at
+  all — to 1248 px, which fits with room left over.
 
 - The column headers of the restore point list looked clickable and were not. *Time*, *Status*
   and *Build* used WPF's stock header, which is a button: it highlights under the pointer and

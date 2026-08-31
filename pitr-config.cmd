@@ -2752,7 +2752,7 @@ $xaml = @'
     <GroupBox x:Name="GrpLog" Padding="6">
       <StackPanel>
         <TextBox x:Name="TxtLog" IsReadOnly="True" TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Auto" Height="60"
+                 VerticalScrollBarVisibility="Auto" Height="76"
                  BorderThickness="1" BorderBrush="#DDD" Background="White"
                  Padding="6" FontFamily="Consolas" FontSize="12"/>
         <!-- Beim Protokoll und nicht bei den Knoepfen unten: Was hier herauskommt, ist

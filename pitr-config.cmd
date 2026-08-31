@@ -2375,7 +2375,13 @@ $xaml = @'
     </Style>
   </Window.Resources>
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="14,14,14,6">
+    <!-- VerticalAlignment="Top" ist hier keine Kosmetik, sondern Voraussetzung fuers
+         Messen: Ohne dies dehnt der ScrollViewer den StackPanel auf die volle Hoehe des
+         Sichtfensters, sobald der Inhalt kleiner ist. Seine ActualHeight ist dann die
+         Hoehe des Fensters und nicht die des Inhalts - freier Platz unten laesst sich so
+         nicht von gefuelltem unterscheiden. Oben angeschlagen bleibt die ActualHeight das,
+         was der Inhalt wirklich braucht. -->
+    <StackPanel Margin="14,14,14,6" VerticalAlignment="Top">
 
     <Grid Margin="0,0,0,8">
       <Grid.ColumnDefinitions>
@@ -3585,6 +3591,55 @@ function Invoke-TaskNow {
     }
 }
 
+# Wird oben ein Kasten eingeklappt - etwa der Hinweis auf eine veraltete Startkopie,
+# sobald die Kopie aufgefrischt ist -, wird der Inhalt kuerzer, das Fenster bleibt aber
+# stehen. Uebrig blieb bisher ein leerer Streifen unten. Das Fenster dafuer zusammen-
+# zuziehen waere die naheliegende Antwort, irritiert aber: Ein Fenster, das nach einem
+# Klick von selbst schrumpft, wirkt wie ein Fehler. Stattdessen bekommt das Protokoll den
+# Platz - das einzige Feld hier, dem mehr Hoehe tatsaechlich nutzt.
+#
+# Es geht ihn auch wieder her: Braucht der Inhalt spaeter mehr Raum, schrumpft das Feld
+# zurueck, aber nie unter seine Grundhoehe aus dem XAML. Erst danach entsteht wieder ein
+# Rollbalken.
+#
+# Zwei Pixel Schwelle, weil ViewportHeight und ExtentHeight auf Zehntel genau sind und
+# eine Anpassung um ein Zehntel nur Arbeit macht. Das Flag verhindert, dass die eigene
+# Groessenaenderung die Behandlung erneut ausloest.
+# Die wahre Hoehe des Inhalts. Nicht ExtentHeight des ScrollViewers: Die wird nicht
+# nachgefuehrt, solange der Inhalt ohnehin passt - gemessen blieb sie bei 1248 stehen,
+# waehrend das Panel schon auf 1277 gewachsen war. Der Rand des Panels liegt ausserhalb
+# seiner ActualHeight und muss deshalb dazu.
+function Get-ContentHeight {
+    $p = $window.Content.Content
+    return $p.ActualHeight + $p.Margin.Top + $p.Margin.Bottom
+}
+
+# Erst nach dem Startzuschnitt: Waehrend das Fenster sich beim Start auf den Inhalt
+# einpendelt, gibt es zwischendurch grosse Zwischenstaende. Wuerde das Protokoll die schon
+# aufsaugen, waere es beim Start jedes Mal unterschiedlich hoch - und der Zuschnitt haette
+# ein bewegliches Ziel.
+$script:FitReady = $false
+$script:FitBusy = $false
+function Update-LogFit {
+    if (-not $script:FitReady -or $script:FitBusy) { return }
+    $sv = $window.Content
+    if ($sv.ViewportHeight -le 0) { return }
+    # Ein Pixel bleibt frei: Genau aufzufuellen heisst, um ein Zehntel darueber zu landen,
+    # und dafuer erscheint prompt wieder ein Rollbalken.
+    $frei = $sv.ViewportHeight - (Get-ContentHeight) - 1
+    if ([math]::Abs($frei) -lt 2) { return }
+    # Obergrenze als Notnagel: Erreichbar ist sie nicht, denn zusammen ergeben alle
+    # einklappbaren Kaesten keine 200 Pixel. Sie steht da, damit ein unerwarteter Wert
+    # nicht in ein absurd hohes Protokollfeld laeuft.
+    $neu = [math]::Min(200, [math]::Max($script:LogHeightBase, $ctl.TxtLog.Height + $frei))
+    if ([math]::Abs($neu - $ctl.TxtLog.Height) -lt 1) { return }
+    $script:FitBusy = $true
+    try {
+        $ctl.TxtLog.Height = $neu
+        $window.UpdateLayout()
+    } finally { $script:FitBusy = $false }
+}
+
 function Set-Busy {
     param([bool]$On)
     $buttons = @('BtnSnapNow','BtnReset','BtnRefresh','BtnApply','BtnApplyNow','BtnWinRE','BtnCopy','BtnHist',
@@ -3812,6 +3867,17 @@ $ctl.BtnReset.Add_Click({
 # ---------------------------------------------------------------------- Start --
 Apply-Language
 
+# Die Grundhoehe steht im XAML und wird von dort gelesen, damit die beiden Werte nicht
+# auseinanderlaufen koennen.
+#
+# ScrollChanged und nicht SizeChanged: SizeChanged feuert mitten in der Layoutrechnung,
+# ViewportHeight und ExtentHeight sind dort noch die alten - nachgemessen und erlebt, die
+# Anpassung unterblieb schlicht. ScrollChanged meldet genau die Aenderung dieser beiden
+# Werte und feuert danach. Es deckt beide Faelle ab: Der Inhalt aendert sich (ein Kasten
+# klappt zu) oder das Sichtfenster (der Nutzer zieht am Fensterrand).
+$script:LogHeightBase = $ctl.TxtLog.Height
+$window.Content.Add_ScrollChanged({ Update-LogFit })
+
 # Die Felder tragen bis zur ersten Abfrage einen Platzhalter. "-" waere hier falsch:
 # Das sieht nach einer Auskunft aus, obwohl noch gar nichts gelesen wurde.
 foreach ($n in 'TxtSupport','TxtEdition','TxtLast','TxtNext','TxtDelta','TxtTaskState','TxtWinRE',
@@ -3866,8 +3932,8 @@ $window.Add_ContentRendered({
     try {
         $sv     = $window.Content
         $panel  = $sv.Content
-        # ExtentHeight und nicht die Hoehe des StackPanels: Dessen Rand von 14 Pixeln liegt
-        # ausserhalb seiner ActualHeight, oben wie unten. Ohne diese 28 Pixel blieb das
+        # Get-ContentHeight und nicht die nackte Hoehe des StackPanels: Dessen Rand liegt
+        # ausserhalb seiner ActualHeight, oben wie unten. Ohne diese Pixel blieb das
         # Fenster immer ein Stueck zu kurz und behielt einen Rollbalken fuer einen Rest, der
         # bequem hineingepasst haette - unten sah es aus, als laege dort ungenutzter Platz.
         #
@@ -3878,7 +3944,7 @@ $window.Add_ContentRendered({
         # Her, zwei Pixel die Schwelle, ab der sich Nachbessern nicht mehr lohnt.
         for ($i = 0; $i -lt 3; $i++) {
             $chrome = $window.ActualHeight - $sv.ActualHeight
-            $need   = [math]::Ceiling($sv.ExtentHeight + $chrome + 2)
+            $need   = [math]::Ceiling((Get-ContentHeight) + $chrome + 2)
             $target = [math]::Min($window.MaxHeight, $need)
             if ([math]::Abs($target - $window.ActualHeight) -lt 2) { break }
             $window.Height = $target
@@ -3892,11 +3958,13 @@ $window.Add_ContentRendered({
         # da ist. Ein Pixel bleibt stehen, damit nicht wegen einer Rundung von Zehnteln
         # doch wieder ein Rollbalken erscheint.
         $window.UpdateLayout()
-        $rest = $sv.ViewportHeight - $sv.ExtentHeight - 1
+        $rest = $sv.ViewportHeight - (Get-ContentHeight) - 1
         if ($rest -gt 0) {
             $kleiner = [math]::Max($window.MinHeight, [math]::Floor($window.ActualHeight - $rest))
             if ($kleiner -lt $window.ActualHeight) { $window.Height = $kleiner }
         }
+        # Ab jetzt darf das Protokoll freiwerdenden Platz uebernehmen.
+        $script:FitReady = $true
 
         # Neu mittig setzen: CenterScreen zentriert auf dem Bildschirm, nicht auf der
         # Arbeitsflaeche, und die Hoehe hat sich seitdem geaendert.

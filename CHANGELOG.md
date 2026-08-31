@@ -25,6 +25,25 @@ Notable changes are recorded here. The format follows
   longer show every column, and what gets cut off is now the status text rather than the build
   number or the duration.
 
+- Space that comes free below the content now goes to the log box instead of standing there
+  empty. When a box at the top collapses — the notice about an outdated startup copy, once the
+  copy has been refreshed — the content gets shorter while the window stays put, and what was
+  left over was an empty strip at the bottom. Shrinking the window would be the obvious answer,
+  but a window that shrinks by itself after a click reads as a fault. The log is the one field
+  here that genuinely benefits from more height, so it takes the space, and gives it back when
+  the content needs room again — never dropping below the height it starts at. Dragging the
+  window taller does the same thing, rather than leaving a gap.
+
+  This needed `VerticalAlignment="Top"` on the content panel, and that is not cosmetic. Inside
+  a scroll viewer a panel is stretched to the full height of the viewport as soon as the
+  content is smaller, so its `ActualHeight` reports the window's height rather than the
+  content's — empty space below is then indistinguishable from filled space. Two other
+  measurements were wrong for related reasons: `ExtentHeight` is not updated while the content
+  fits (measured at 1248 px while the panel had already grown to 1277), and `SizeChanged` fires
+  in the middle of the layout pass, where those numbers are still the old ones. The event to
+  listen to is `ScrollChanged`, which is precisely the report that viewport or extent has
+  changed, and it arrives afterwards.
+
 ### Fixed
 
 - The window sized itself too short and kept a scroll bar it did not need. The height was

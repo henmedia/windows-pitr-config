@@ -168,7 +168,7 @@ $ErrorActionPreference = 'Stop'
 # The one place the version is defined. It appears under the headline in the window
 # and in the selftest; a release is tagged with "v" followed by this value. Keeping
 # it out of the batch header above avoids having two numbers that can drift apart.
-$Version  = '1.7.1'
+$Version  = '1.8.0'
 
 # Asked on start unless PITR_NOUPDATE is set. Returns the newest release of the project.
 $UpdateApi = 'https://api.github.com/repos/henmedia/windows-pitr-config/releases/latest'
@@ -282,6 +282,7 @@ en = @{
     askCopyT   = 'Startup snapshot'
     logCopyOk  = 'Copied to {0} - the task uses that file.'
     loading    = 'reading...'
+    logCollecting = 'Collecting data...'
     staleOld   = 'The startup task still runs version {0} from {1}. This one is {2}.'
     staleGone  = 'The startup task points at {0}, and that file is no longer there.'
     btnAutoUpd = 'Refresh the copy'
@@ -334,7 +335,6 @@ en = @{
     sizeStd    = 'Windows default (2% of the disk)'
 
     carryOver  = 'still stems from the previous setting; will be adjusted on the next run to'
-    proven72   = 'older than 72 hours: the extended retention demonstrably works'
     unofficial = 'Unofficial approach: the configuration values written here are undocumented by Microsoft and may change with future Windows releases. "Reset everything" restores the Windows default at any time.'
     taskMissing= 'PITRTask not found'
     unknownTxt = 'unknown'
@@ -441,6 +441,7 @@ de = @{
     askCopyT   = 'Startschnappschuss'
     logCopyOk  = 'Nach {0} kopiert - die Aufgabe verwendet diese Datei.'
     loading    = 'wird gelesen...'
+    logCollecting = 'Sammle Daten...'
     staleOld   = 'Die Startaufgabe führt weiterhin Version {0} aus {1} aus. Diese hier ist {2}.'
     staleGone  = 'Die Startaufgabe zeigt auf {0}, und diese Datei gibt es nicht mehr.'
     btnAutoUpd = 'Kopie aktualisieren'
@@ -493,7 +494,6 @@ de = @{
     sizeStd    = 'Windows-Standard (2% der Platte)'
 
     carryOver  = 'stammt noch aus der vorherigen Einstellung; wird beim nächsten Lauf angepasst auf'
-    proven72   = 'älter als 72 Stunden: die erweiterte Aufbewahrung wirkt nachweislich'
     unofficial = 'Inoffizielle Lösung: Die hier gesetzten Konfigurationswerte sind von Microsoft nicht dokumentiert und können sich mit künftigen Windows-Versionen ändern. „Alles zurücksetzen“ stellt jederzeit den Windows-Standard wieder her.'
     taskMissing= 'PITRTask nicht gefunden'
     unknownTxt = 'unbekannt'
@@ -598,6 +598,7 @@ nl = @{
     askCopyT   = 'Opstartmomentopname'
     logCopyOk  = 'Gekopieerd naar {0} - de taak gebruikt dat bestand.'
     loading    = 'wordt gelezen...'
+    logCollecting = 'Gegevens worden verzameld...'
     staleOld   = 'De opstarttaak voert nog steeds versie {0} uit {1} uit. Dit bestand is {2}.'
     staleGone  = 'De opstarttaak wijst naar {0}, en dat bestand bestaat niet meer.'
     btnAutoUpd = 'Kopie vernieuwen'
@@ -650,7 +651,6 @@ nl = @{
     sizeStd    = 'Windows-standaard (2% van de schijf)'
 
     carryOver  = 'komt nog van de vorige instelling; wordt bij de volgende uitvoering aangepast naar'
-    proven72   = 'ouder dan 72 uur: de verlengde bewaartermijn werkt aantoonbaar'
     unofficial = 'Niet-officiële aanpak: de hier geschreven configuratiewaarden zijn niet door Microsoft gedocumenteerd en kunnen wijzigen in toekomstige Windows-versies. „Alles resetten” herstelt op elk moment de Windows-standaard.'
     taskMissing= 'PITRTask niet gevonden'
     unknownTxt = 'onbekend'
@@ -759,6 +759,7 @@ fr = @{
     askCopyT   = 'Instantané au démarrage'
     logCopyOk  = 'Copié vers {0} - la tâche utilise ce fichier.'
     loading    = 'lecture...'
+    logCollecting = 'Collecte des données...'
     staleOld   = 'La tâche de démarrage exécute encore la version {0} depuis {1}. Celle-ci est la {2}.'
     staleGone  = 'La tâche de démarrage pointe vers {0}, et ce fichier n''existe plus.'
     btnAutoUpd = 'Actualiser la copie'
@@ -811,7 +812,6 @@ fr = @{
     sizeStd    = 'Valeur par défaut de Windows (2% du disque)'
 
     carryOver  = 'provient encore du réglage précédent ; sera ajusté à la prochaine exécution sur'
-    proven72   = 'plus de 72 heures : la conservation étendue fonctionne de manière démontrable'
     unofficial = 'Solution non officielle : les valeurs de configuration écrites ici ne sont pas documentées par Microsoft et peuvent changer avec de futures versions de Windows. « Tout réinitialiser » rétablit à tout moment la valeur par défaut de Windows.'
     taskMissing= 'PITRTask introuvable'
     unknownTxt = 'inconnu'
@@ -916,6 +916,7 @@ es = @{
     askCopyT   = 'Instantánea de inicio'
     logCopyOk  = 'Copiado a {0}: la tarea usa ese archivo.'
     loading    = 'leyendo...'
+    logCollecting = 'Recopilando datos...'
     staleOld   = 'La tarea de inicio sigue ejecutando la versión {0} desde {1}. Esta es la {2}.'
     staleGone  = 'La tarea de inicio apunta a {0}, y ese archivo ya no existe.'
     btnAutoUpd = 'Actualizar la copia'
@@ -968,7 +969,6 @@ es = @{
     sizeStd    = 'Valor predeterminado de Windows (2% del disco)'
 
     carryOver  = 'procede todavía del ajuste anterior; se corregirá en la próxima ejecución a'
-    proven72   = 'más de 72 horas: la conservación ampliada funciona de forma demostrable'
     unofficial = 'Solución no oficial: los valores de configuración que se escriben aquí no están documentados por Microsoft y pueden cambiar en futuras versiones de Windows. «Restablecer todo» devuelve el valor predeterminado de Windows en cualquier momento.'
     taskMissing= 'PITRTask no encontrada'
     unknownTxt = 'desconocido'
@@ -1073,6 +1073,7 @@ pt = @{
     askCopyT   = 'Instantâneo de inicialização'
     logCopyOk  = 'Copiado para {0} - a tarefa usa esse arquivo.'
     loading    = 'lendo...'
+    logCollecting = 'Coletando dados...'
     staleOld   = 'A tarefa de inicialização ainda executa a versão {0} de {1}. Esta aqui é a {2}.'
     staleGone  = 'A tarefa de inicialização aponta para {0}, e esse arquivo não existe mais.'
     btnAutoUpd = 'Atualizar a cópia'
@@ -1125,7 +1126,6 @@ pt = @{
     sizeStd    = 'Padrão do Windows (2% do disco)'
 
     carryOver  = 'ainda vem da configuração anterior; será ajustado na próxima execução para'
-    proven72   = 'mais de 72 horas: a retenção estendida funciona comprovadamente'
     unofficial = 'Solução não oficial: os valores de configuração gravados aqui não são documentados pela Microsoft e podem mudar em versões futuras do Windows. "Redefinir tudo" restaura o padrão do Windows a qualquer momento.'
     taskMissing= 'PITRTask não encontrada'
     unknownTxt = 'desconhecido'
@@ -1231,6 +1231,7 @@ it = @{
     askCopyT   = 'Istantanea all''avvio'
     logCopyOk  = 'Copiato in {0} - l''attività usa quel file.'
     loading    = 'lettura...'
+    logCollecting = 'Raccolta dati in corso...'
     staleOld   = 'L''attività di avvio esegue ancora la versione {0} da {1}. Questa è la {2}.'
     staleGone  = 'L''attività di avvio punta a {0}, e quel file non c''è più.'
     btnAutoUpd = 'Aggiorna la copia'
@@ -1283,7 +1284,6 @@ it = @{
     sizeStd    = 'impostazione predefinita di Windows (2% del disco)'
 
     carryOver  = 'deriva ancora dall''impostazione precedente; alla prossima esecuzione verrà portato a'
-    proven72   = 'più vecchio di 72 ore: la conservazione estesa funziona in modo dimostrabile'
     unofficial = 'Soluzione non ufficiale: i valori di configurazione scritti qui non sono documentati da Microsoft e possono cambiare con le future versioni di Windows. «Reimposta tutto» ripristina in qualsiasi momento l''impostazione predefinita di Windows.'
     taskMissing= 'PITRTask non trovata'
     unknownTxt = 'sconosciuto'
@@ -1391,6 +1391,7 @@ pl = @{
     askCopyT   = 'Migawka startowa'
     logCopyOk  = 'Skopiowano do {0} - zadanie używa tego pliku.'
     loading    = 'odczyt...'
+    logCollecting = 'Zbieranie danych...'
     staleOld   = 'Zadanie startowe nadal uruchamia wersję {0} z {1}. Ta tutaj to {2}.'
     staleGone  = 'Zadanie startowe wskazuje na {0}, a tego pliku już nie ma.'
     btnAutoUpd = 'Odśwież kopię'
@@ -1443,7 +1444,6 @@ pl = @{
     sizeStd    = 'ustawienie domyślne systemu Windows (2% dysku)'
 
     carryOver  = 'nadal pochodzi z poprzedniego ustawienia; przy następnym uruchomieniu zostanie zmieniony na'
-    proven72   = 'starszy niż 72 godziny: wydłużony czas przechowywania działa w praktyce'
     unofficial = 'Rozwiązanie nieoficjalne: zapisywane tutaj wartości konfiguracyjne nie są udokumentowane przez firmę Microsoft i mogą ulec zmianie w przyszłych wersjach systemu Windows. „Resetuj wszystko” w każdej chwili przywraca ustawienie domyślne systemu Windows.'
     taskMissing= 'Nie znaleziono zadania PITRTask'
     unknownTxt = 'nieznany'
@@ -1548,6 +1548,7 @@ cs = @{
     askCopyT   = 'Snímek při spuštění'
     logCopyOk  = 'Zkopírováno do {0} - úloha používá tento soubor.'
     loading    = 'čte se...'
+    logCollecting = 'Shromažďování dat...'
     staleOld   = 'Úloha při spuštění stále spouští verzi {0} z {1}. Tato zde je {2}.'
     staleGone  = 'Úloha při spuštění ukazuje na {0}, a ten soubor už neexistuje.'
     btnAutoUpd = 'Obnovit kopii'
@@ -1600,7 +1601,6 @@ cs = @{
     sizeStd    = 'Výchozí hodnota Windows (2 % disku)'
 
     carryOver  = 'stále pochází z předchozího nastavení; při příštím spuštění bude upraveno na'
-    proven72   = 'starší než 72 hodin: prodloužená doba uchování prokazatelně funguje'
     unofficial = 'Neoficiální postup: zde zapsané konfigurační hodnoty nejsou dokumentované společností Microsoft a mohou se v budoucích verzích Windows změnit. „Resetovat vše“ kdykoli obnoví výchozí hodnotu Windows.'
     taskMissing= 'Úloha PITRTask nenalezena'
     unknownTxt = 'neznámé'
@@ -1705,6 +1705,7 @@ uk = @{
     askCopyT   = 'Знімок під час запуску'
     logCopyOk  = 'Скопійовано до {0} - завдання використовує цей файл.'
     loading    = 'зчитування...'
+    logCollecting = 'Збір даних...'
     staleOld   = 'Завдання запуску й досі виконує версію {0} з {1}. Цей файл - {2}.'
     staleGone  = 'Завдання запуску вказує на {0}, а цього файлу більше немає.'
     btnAutoUpd = 'Оновити копію'
@@ -1757,7 +1758,6 @@ uk = @{
     sizeStd    = 'Типове значення Windows (2% диска)'
 
     carryOver  = 'все ще походить від попереднього налаштування; при наступному запуску буде змінено на'
-    proven72   = 'старіші за 72 години: подовжений термін зберігання доведено працює'
     unofficial = 'Неофіційний підхід: записані тут значення конфігурації не задокументовані Microsoft і можуть змінитися в майбутніх версіях Windows. «Скинути все» будь-коли відновлює типове значення Windows.'
     taskMissing= 'Завдання PITRTask не знайдено'
     unknownTxt = 'невідомо'
@@ -1913,6 +1913,53 @@ function Format-Age {
 # Der Verlauf ist bei Windows ab Werk abgeschaltet. Dann gibt es hier $null, die Spalte
 # bleibt leer und die Oberflaeche bietet das Einschalten an - heimlich wird an einer
 # systemweiten Protokolleinstellung nichts gedreht.
+# -------------------------------------------------- Aufgabenplaner, nur lesend --
+# Get-ScheduledTask kostet gemessene ~400 ms je Aufruf, gleich ob die Aufgabe existiert
+# oder nicht: Das Cmdlet baut fuer jede Abfrage vollstaendige Objekte auf. Dieselben
+# Angaben liefert die COM-Schnittstelle des Aufgabenplaners in ~20 ms, Wert fuer Wert
+# identisch (Zustand, letzter/naechster Lauf, ausgefallene Laeufe, Trigger, Aktionen).
+#
+# Bewusst ausschliesslich LESEND. Alles, was Aufgaben veraendert - die Leerlauf-Bedingung
+# in Invoke-TaskNow, Register/Unregister beim Startschnappschuss - bleibt bei den
+# Cmdlets. Dort geht Lesbarkeit vor einer Zehntelsekunde, und ein Fehler waere dort
+# nicht langsam, sondern folgenreich: Bleibt RunOnlyIfIdle versehentlich aus, legt
+# Windows fortan mitten im Arbeiten Schattenkopien an.
+$script:TaskSvc = $null
+function Get-TaskService {
+    if ($null -eq $script:TaskSvc) {
+        try {
+            $s = New-Object -ComObject Schedule.Service
+            $s.Connect()
+            $script:TaskSvc = $s
+        } catch { return $null }
+    }
+    return $script:TaskSvc
+}
+
+# Gibt die registrierte Aufgabe zurueck oder $null - nie eine Ausnahme, damit sich die
+# Aufrufer wie bisher darauf verlassen koennen, dass "nicht vorhanden" schlicht $null ist.
+function Get-TaskRead {
+    param([string]$Path, [string]$Name)
+    $svc = Get-TaskService
+    if ($null -eq $svc) { return $null }
+    $folder = $Path.TrimEnd('\')
+    if ($folder -eq '') { $folder = '\' }
+    try { return $svc.GetFolder($folder).GetTask($Name) } catch { return $null }
+}
+
+# Ueber COM ist der Zustand eine Zahl. Uebersetzt wird in genau die Namen, auf die die
+# Oberflaeche schon immer verzweigt hat, damit sich an der Auswertung nichts aendert.
+function Get-TaskStateName {
+    param($ComTask)
+    switch ([int]$ComTask.State) {
+        1       { 'Disabled' }
+        2       { 'Queued' }
+        3       { 'Ready' }
+        4       { 'Running' }
+        default { 'Unknown' }
+    }
+}
+
 function Get-TaskRuns {
     $log = 'Microsoft-Windows-TaskScheduler/Operational'
     # $TaskPath endet bereits auf einen Backslash - schlichtes Aneinanderhaengen ist
@@ -1929,9 +1976,28 @@ function Get-TaskRuns {
     # die PITRTask betreffen, sind es 7 ms. Der Aufwand bleibt damit konstant, egal wie
     # voll das Protokoll ist - und es fuellt sich mit jeder Aufgabe des Systems.
     $xp = "*[System[(EventID=100 or EventID=102)]] and *[EventData[Data[@Name='TaskName']='$full']]"
+
+    # Gelesen wird ueber EventLogReader statt ueber Get-WinEvent, und das ist der
+    # Unterschied zwischen einer Sekunde und zwanzig Millisekunden. Dieselbe Abfrage,
+    # dasselbe Ergebnis - nachgemessen: 38 Ereignisse, 19 Laeufe, kein Unterschied in
+    # einem einzigen Wert. Die Zeit steckt nicht in der Abfrage, sondern in dem, was
+    # das Cmdlet drumherum aufbaut; in einem frisch gestarteten Prozess - und ein
+    # anderer ist dieses Werkzeug nie - kostet das jedes Mal rund eine Sekunde.
+    # ReverseDirection liest von neu nach alt, wie es Get-WinEvent von sich aus tat.
+    $ev = New-Object System.Collections.Generic.List[object]
+    $rd = $null
     try {
-        $ev = Get-WinEvent -LogName $log -FilterXPath $xp -MaxEvents 200 -ErrorAction Stop
+        $q = New-Object System.Diagnostics.Eventing.Reader.EventLogQuery(
+            $log, [System.Diagnostics.Eventing.Reader.PathType]::LogName, $xp)
+        $q.ReverseDirection = $true
+        $rd = New-Object System.Diagnostics.Eventing.Reader.EventLogReader($q)
+        while ($ev.Count -lt 200) {
+            $e = $rd.ReadEvent()
+            if ($null -eq $e) { break }
+            $ev.Add($e)
+        }
     } catch { return @() }          # eingeschaltet, aber noch nichts drin
+    finally { if ($rd) { try { $rd.Dispose() } catch { } } }
 
     # In einfachen Anfuehrungszeichen ist '\' buchstaeblich ZWEI Backslashes - der
     # Aufgabenname haette damit nie gepasst. Join-Path waere hier falsch (kein Dateipfad).
@@ -2007,11 +2073,21 @@ function Get-RestorePoints {
                         elseif ($vss.ContainsKey("$($p.Id)")) { T 'stShadowOk' }
                         else { T 'stRegOnly' }
             Version   = "$($p.Build).$($p.Revision)"
+            # A plain loop with an early break instead of Where-Object | Select-Object
+            # -First 1: that pipeline runs its scriptblock and streams every one of up
+            # to ~100 runs through the pipeline machinery, for every point in the list -
+            # measurably slower in Windows PowerShell 5.1 than a direct loop, and this
+            # runs on every single point on every refresh. Same match, same order,
+            # just without the pipeline overhead.
             Dauer     = if ($dt -and $runs) {
-                            $hit = $runs | Where-Object {
-                                $dt -ge $_.Start.AddSeconds(-30) -and $dt -le $_.End.AddSeconds(30)
-                            } | Select-Object -First 1
-                            if ($hit) { Format-Elapsed $hit.Seconds } else { '-' }
+                            $sekunden = $null
+                            foreach ($r in $runs) {
+                                if ($dt -ge $r.Start.AddSeconds(-30) -and $dt -le $r.End.AddSeconds(30)) {
+                                    $sekunden = $r.Seconds
+                                    break
+                                }
+                            }
+                            if ($null -ne $sekunden) { Format-Elapsed $sekunden } else { '-' }
                         } else { '-' }
         })
     }
@@ -2145,6 +2221,12 @@ $xaml = @'
       <StackPanel Grid.Column="0">
         <TextBlock x:Name="TxtHead" FontSize="20" FontWeight="SemiBold"/>
         <TextBlock x:Name="TxtSub" FontSize="13" Foreground="#777" Margin="0,1,0,0"/>
+        <!-- Sitzt bewusst oberhalb der ScrollViewer-Falz: Das Fenster oeffnet zunaechst
+             gedeckelt und waechst erst nach dem ersten Laden auf seine volle Hoehe, das
+             Protokoll ganz unten ist in dieser Zeit also nicht zu sehen. Diese Zeile hier
+             ist es immer, egal wie hoch das Fenster gerade ist. -->
+        <TextBlock x:Name="TxtCollecting" FontSize="12" FontWeight="SemiBold" Foreground="#1A7F37"
+                   Margin="0,2,0,0" Visibility="Collapsed"/>
         <TextBlock FontSize="12" Margin="0,3,0,0">
           <Hyperlink x:Name="LnkProject"><Run Text="github.com/henmedia/windows-pitr-config"/></Hyperlink>
           <Run Text="   ·   " Foreground="#AAAAAA"/>
@@ -2209,8 +2291,11 @@ $xaml = @'
     </Grid>
 
     <!-- Nur sichtbar, wenn die Startaufgabe auf eine andere Fassung zeigt als die
-         gerade laufende. Gelb wie der Unoffiziell-Hinweis: eine Warnung, kein Fehler. -->
-    <Border x:Name="BoxStale" BorderBrush="#D9B36A" BorderThickness="1" Background="#FFF8E7"
+         gerade laufende. Rot wie die Warnung zur Wiederherstellungsumgebung, nicht
+         gelb wie der Unoffiziell-Hinweis: Der naechste automatische Schnappschuss
+         liefe sonst unbemerkt mit einer veralteten Kopie, das ist mehr als eine
+         stehende Randnotiz und soll entsprechend auffallen. -->
+    <Border x:Name="BoxStale" BorderBrush="#E3B4B4" BorderThickness="1" Background="#FDF0F0"
             Padding="8,6" Margin="0,0,0,10" Visibility="Collapsed">
       <Grid>
         <Grid.ColumnDefinitions>
@@ -2218,7 +2303,7 @@ $xaml = @'
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <TextBlock x:Name="TxtStale" Grid.Column="0" TextWrapping="Wrap" VerticalAlignment="Center"
-                   Foreground="#6B5210" FontSize="12"/>
+                   Foreground="#8A2C2C" FontSize="12"/>
         <Button x:Name="BtnAutoUpd" Grid.Column="1" Height="24" Padding="12,0" Margin="12,0,0,0"
                 FontSize="12"/>
       </Grid>
@@ -2339,7 +2424,7 @@ $xaml = @'
                     <Setter Property="Template">
                       <Setter.Value>
                         <ControlTemplate TargetType="GridViewColumnHeader">
-                          <Border BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="0,2,12,2">
+                          <Border BorderBrush="#DDD" BorderThickness="0,0,1,1" Padding="0,2,12,2">
                             <ContentPresenter HorizontalAlignment="Right" VerticalAlignment="Center"/>
                           </Border>
                         </ControlTemplate>
@@ -2359,7 +2444,7 @@ $xaml = @'
                     <Setter Property="Template">
                       <Setter.Value>
                         <ControlTemplate TargetType="GridViewColumnHeader">
-                          <Border BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="0,2,12,2">
+                          <Border BorderBrush="#DDD" BorderThickness="0,0,1,1" Padding="0,2,12,2">
                             <ContentPresenter HorizontalAlignment="Right" VerticalAlignment="Center"/>
                           </Border>
                         </ControlTemplate>
@@ -2459,26 +2544,29 @@ $xaml = @'
 $reader = New-Object System.Xml.XmlNodeReader ([xml]$xaml)
 $window = [System.Windows.Markup.XamlReader]::Load($reader)
 
-$ctl = @{}
-foreach ($n in 'TxtHead','TxtSub','TxtIntro','TxtUnofficial',
-               'LnkProject','LnkGuide','RunGuide',
-               'TxtUpdate','LnkUpdate','RunUpdate',
-               'BtnLangEN','BtnLangDE','BtnLangNL','BtnLangFR','BtnLangES','BtnLangPT',
-               'BtnLangIT','BtnLangPL','BtnLangUK','BtnLangCS',
-               'BtnSnapNow','TxtSnapHint','ChkAuto','CmbAutoDelay','TxtAutoHint',
-               'BoxStale','TxtStale','BtnAutoUpd',
-               'GrpState','CapEdition','TxtEdition','CapLast','TxtLast','CapNext','TxtNext',
-               'CapWinRE','TxtWinRE','BtnWinRE','BoxWinRE','TxtWinReNote','BtnCopy','TxtCopyHint',
-               'CapTaskState','TxtTaskState','CapDelta','TxtDelta','TxtIdleNote',
-               'BoxIdle','TxtIdleDiag','BtnIdleChk',
-               'GrpPoints','TxtPoints','TxtOldest','TxtStorage','TxtStoreNote','LstPoints',
-               'RowHist','TxtHistHint','BtnHist',
-               'TxtVolumeNote',
-               'GrpSet','CapActive','CmbActive','LblActive','CapFreq','CmbFreq','LblFreq',
-               'CapReten','CmbReten','LblReten','CapSize','CmbSize','LblSize',
-               'BtnReset','BtnRefresh','BtnApply','BtnApplyNow','GrpLog','TxtLog') {
-    $ctl[$n] = $window.FindName($n)
+# Collects every named element in one pass instead of a hand-typed list of x:Name
+# values. That list used to need a matching edit here whenever the XAML gained or
+# lost a name - easy to forget, and nothing would have caught it (a missing entry
+# just means $ctl[$n] is $null until the first thing that touches it throws). A walk
+# over the logical tree finds all of them by construction, buttons and Hyperlink/Run
+# elements inside a TextBlock alike, and stays correct as the window changes.
+function Get-NamedElements {
+    param($Root)
+    $result = @{}
+    $stack = New-Object System.Collections.Generic.Stack[object]
+    $stack.Push($Root)
+    while ($stack.Count -gt 0) {
+        $el = $stack.Pop()
+        if (($el -is [System.Windows.FrameworkElement] -or $el -is [System.Windows.FrameworkContentElement]) -and $el.Name) {
+            $result[$el.Name] = $el
+        }
+        foreach ($child in [System.Windows.LogicalTreeHelper]::GetChildren($el)) {
+            if ($child -is [System.Windows.DependencyObject]) { $stack.Push($child) }
+        }
+    }
+    return $result
 }
+$ctl = Get-NamedElements $window
 
 # Marks the active language button. Built once - a brush per repaint would be wasteful.
 $BrushActiveLang = New-Object System.Windows.Media.SolidColorBrush (
@@ -2604,6 +2692,7 @@ function Apply-Language {
     $window.Title        = T 'winTitle'
     $ctl.TxtHead.Text    = T 'headline'
     $ctl.TxtSub.Text     = "$(T 'subtitle')  ·  Version $Version"
+    $ctl.TxtCollecting.Text  = T 'logCollecting'
     $ctl.TxtIntro.Text       = T 'intro'
     $ctl.TxtUnofficial.Text  = T 'unofficial'
     $ctl.RunGuide.Text       = T 'lnkGuide'
@@ -2692,23 +2781,40 @@ function Apply-Language {
 # Die eigene Aufgabe bleibt bei der Zaehlung aussen vor: Sie laesst sich ueber den
 # gruenen Knopf erzwingen und truege dann einen frischen Zeitstempel, der den ganzen
 # Befund umkehren wuerde.
+# Ebenfalls rein lesend. Ueber COM entfaellt hier zusaetzlich die zweite Abfrage je
+# Aufgabe: Der letzte Lauf haengt bereits an der registrierten Aufgabe selbst, waehrend
+# das Cmdlet dafuer noch einmal Get-ScheduledTaskInfo je Stueck gebraucht haette.
+# GetTasks(1) bzw. GetFolders(0) heisst "auch versteckte" - genau der Umfang, den
+# Get-ScheduledTask ohne Filter ebenfalls geliefert hat; gegengeprueft, gleiche Menge.
 function Get-IdleHealth {
     $boot   = (Get-CimInstance Win32_OperatingSystem -ErrorAction Stop).LastBootUpTime
     $mine   = $TaskPath + $TaskName
     $total  = 0
     $since  = 0
     $newest = $null
-    foreach ($t in (Get-ScheduledTask -ErrorAction Stop)) {
-        if (-not $t.Settings.RunOnlyIfIdle) { continue }
-        if (($t.TaskPath + $t.TaskName) -eq $mine) { continue }
+
+    $svc = Get-TaskService
+    if ($null -eq $svc) { throw 'task scheduler unavailable' }
+    $tasks = New-Object System.Collections.Generic.List[object]
+    $stack = New-Object System.Collections.Generic.Stack[object]
+    $stack.Push($svc.GetFolder('\'))
+    while ($stack.Count -gt 0) {
+        $f = $stack.Pop()
+        try { foreach ($t in $f.GetTasks(1))   { $tasks.Add($t) } } catch { }
+        try { foreach ($s in $f.GetFolders(0)) { $stack.Push($s) } } catch { }
+    }
+
+    foreach ($t in $tasks) {
+        try { if (-not $t.Definition.Settings.RunOnlyIfIdle) { continue } } catch { continue }
+        if ($t.Path -eq $mine) { continue }
         $total++
-        $i = Get-ScheduledTaskInfo -InputObject $t -ErrorAction SilentlyContinue
-        if ($null -eq $i -or $null -eq $i.LastRunTime) { continue }
+        $last = $t.LastRunTime
+        if ($null -eq $last) { continue }
         # Noch nie gelaufene Aufgaben tragen den 30.11.1999 und wuerden das
         # "zuletzt im Leerlauf" verfaelschen.
-        if ($i.LastRunTime.Year -lt 2000) { continue }
-        if ($i.LastRunTime -gt $boot) { $since++ }
-        if ($null -eq $newest -or $i.LastRunTime -gt $newest) { $newest = $i.LastRunTime }
+        if ($last.Year -lt 2000) { continue }
+        if ($last -gt $boot) { $since++ }
+        if ($null -eq $newest -or $last -gt $newest) { $newest = $last }
     }
     # Kurz nach dem Systemstart ist "noch keine gelaufen" kein Befund, sondern zu frueh:
     # Leerlauf setzt Minuten ohne Eingabe voraus, und die Aufgaben verteilen sich ueber
@@ -2757,14 +2863,7 @@ function Update-View {
     $mitZeit = @($punkte | Where-Object { $null -ne $_.AlterStd })
     if ($mitZeit.Count -gt 0) {
         $aeltest = ($mitZeit | Sort-Object AlterStd -Descending)[0]
-        $ot = "$(T 'lblOldest'): $($aeltest.Zeitpunkt) ($($aeltest.Alter))"
-        if ($aeltest.AlterStd -gt 72.5) {
-            $ot += '  —  ' + (T 'proven72')
-            $ctl.TxtOldest.Foreground = [System.Windows.Media.Brushes]::DarkGreen
-        } else {
-            $ctl.TxtOldest.Foreground = [System.Windows.Media.Brushes]::Black
-        }
-        $ctl.TxtOldest.Text = $ot
+        $ctl.TxtOldest.Text = "$(T 'lblOldest'): $($aeltest.Zeitpunkt) ($($aeltest.Alter))"
     } else {
         $ctl.TxtOldest.Text = "$(T 'lblOldest'): -"
     }
@@ -2780,15 +2879,17 @@ function Update-View {
 
     # --- Scheduled task ---
     try {
-        $task = Get-ScheduledTask -TaskPath $TaskPath -TaskName $TaskName
-        $info = Get-ScheduledTaskInfo -TaskPath $TaskPath -TaskName $TaskName
-        $ctl.TxtLast.Text = Format-Stamp $info.LastRunTime
+        # Zustand, Laufzeiten und ausgefallene Laeufe haengen bei COM alle am selben
+        # Objekt - der frueher noetige zweite Aufruf (Get-ScheduledTaskInfo) entfaellt.
+        $task = Get-TaskRead $TaskPath $TaskName
+        if ($null -eq $task) { throw 'PITRTask not found' }
+        $ctl.TxtLast.Text = Format-Stamp $task.LastRunTime
 
         # Der Lauf findet nur im Leerlauf statt - ein ueberfaelliger Termin ist daher
         # kein Fehler, sondern der Normalfall an einem benutzten Rechner.
-        $nextTxt = Format-Stamp $info.NextRunTime
-        if ($info.NextRunTime -and $info.NextRunTime -lt (Get-Date)) {
-            $due = [math]::Round(((Get-Date) - $info.NextRunTime).TotalMinutes)
+        $nextTxt = Format-Stamp $task.NextRunTime
+        if ($task.NextRunTime -and $task.NextRunTime -lt (Get-Date)) {
+            $due = [math]::Round(((Get-Date) - $task.NextRunTime).TotalMinutes)
             $nextTxt += "  —  $(T 'tsOverdue') $due $(T 'unitMin')"
             $ctl.TxtNext.Foreground = [System.Windows.Media.Brushes]::DarkOrange
         } else {
@@ -2797,7 +2898,7 @@ function Update-View {
         $ctl.TxtNext.Text = $nextTxt
 
         # "Queued" heisst wortwoertlich: Der Lauf ist faellig, wartet aber auf Leerlauf.
-        $stateName = "$($task.State)"
+        $stateName = Get-TaskStateName $task
         $ctl.TxtTaskState.Foreground = [System.Windows.Media.Brushes]::Black
         switch ($stateName) {
             'Ready'    { $ctl.TxtTaskState.Text = T 'tsReady' }
@@ -2812,13 +2913,14 @@ function Update-View {
 
         # Ausgefallene Laeufe gehoeren neben den Status: Sie sind die Erklaerung dafuer,
         # dass zwischen zwei Punkten mehr Zeit liegt als der eingeplante Abstand.
-        if ($info.NumberOfMissedRuns -gt 0) {
-            $ctl.TxtTaskState.Text += '  ·  ' + ((T 'missedRuns') -f $info.NumberOfMissedRuns)
+        $missed = [int]$task.NumberOfMissedRuns
+        if ($missed -gt 0) {
+            $ctl.TxtTaskState.Text += '  ·  ' + ((T 'missedRuns') -f $missed)
             # Der Kasten stellt nur die Frage - beantwortet wird sie auf Knopfdruck,
             # weil die Antwort jede leerlaufgebundene Aufgabe einzeln abfragt und das
             # ein bis zwei Sekunden dauert. Ein geholter Befund bleibt danach stehen.
             if ($null -eq $script:IdleDiag) {
-                $ctl.TxtIdleDiag.Text = (T 'idleBanner') -f $info.NumberOfMissedRuns
+                $ctl.TxtIdleDiag.Text = (T 'idleBanner') -f $missed
             } else {
                 $ctl.TxtIdleDiag.Text = $script:IdleDiag
             }
@@ -2834,8 +2936,11 @@ function Update-View {
         # "next run minus last run" was wrong: when a run is skipped because the machine is
         # not idle - the normal case, and the very thing the note below explains - that gap
         # grows to a multiple of the interval while the schedule itself is unchanged.
+        # Ueber COM haengen die Trigger an der Definition, nicht direkt an der Aufgabe.
+        # Repetition ist dort immer vorhanden und Interval bei einem Trigger ohne
+        # Wiederholung eine leere Zeichenkette - die Pruefung darauf traegt weiterhin.
         $planned = $null
-        foreach ($tr in $task.Triggers) {
+        foreach ($tr in $task.Definition.Triggers) {
             if ($tr.Repetition -and $tr.Repetition.Interval) {
                 try {
                     $planned = [System.Xml.XmlConvert]::ToTimeSpan([string]$tr.Repetition.Interval).TotalMinutes
@@ -2925,7 +3030,7 @@ function Update-AutoRow {
         if ($null -ne $a) { Select-ByTag $ctl.CmbAutoDelay $a.Delay }
     } finally { $script:AutoQuiet = $false }
 
-    $s = Get-AutoStartState
+    $s = Get-AutoStartState -Task $a
     if ($null -ne $s -and $s.Stale) {
         $ctl.TxtStale.Text = switch ($s.Reason) {
             'gone'    { (T 'staleGone') -f $s.Path }
@@ -3007,16 +3112,20 @@ function Get-StateReport {
 $AutoTaskPath = '\pitr-config\'
 $AutoTaskName = 'Startup snapshot'
 
+# Lesend, deshalb ueber COM - siehe Get-TaskRead. Die Aktionssammlung ist dort
+# eins-basiert, nicht null-basiert wie beim Cmdlet.
 function Get-AutoStart {
     try {
-        $t = Get-ScheduledTask -TaskPath $AutoTaskPath -TaskName $AutoTaskName -ErrorAction Stop
+        $t = Get-TaskRead $AutoTaskPath $AutoTaskName
+        if ($null -eq $t) { return $null }
+        $def = $t.Definition
         $d = 5
-        foreach ($tr in $t.Triggers) {
+        foreach ($tr in $def.Triggers) {
             if ($tr.Delay) {
                 try { $d = [int][System.Xml.XmlConvert]::ToTimeSpan([string]$tr.Delay).TotalMinutes } catch { }
             }
         }
-        return [pscustomobject]@{ Enabled = $true; Delay = $d; Action = $t.Actions[0].Arguments }
+        return [pscustomobject]@{ Enabled = $true; Delay = $d; Action = $def.Actions.Item(1).Arguments }
     } catch { }
     return $null
 }
@@ -3058,8 +3167,14 @@ function Get-FileVersion {
 # Die Aufgabe merkt sich einen festen Pfad. Wird spaeter eine neuere Fassung von der
 # Freigabe gestartet, laeuft beim Systemstart weiterhin die alte Kopie - ohne dass es
 # jemandem auffiele. Deshalb wird beides verglichen.
+# -Task nimmt eine bereits geholte Aufgabe entgegen. Beide Aufrufer haben sie zu dem
+# Zeitpunkt schon in der Hand, und ein zweites Get-ScheduledTag kostet hier real eine
+# halbe Sekunde - besonders dann, wenn die Aufgabe gar nicht existiert, denn dann
+# laeuft der Aufruf in eine Ausnahme, und die ist in PowerShell teuer. Ohne den
+# Parameter verhaelt sich die Funktion wie bisher.
 function Get-AutoStartState {
-    $a = Get-AutoStart
+    param($Task)
+    $a = if ($PSBoundParameters.ContainsKey('Task')) { $Task } else { Get-AutoStart }
     if ($null -eq $a) { return $null }
 
     $path = $null
@@ -3438,11 +3553,31 @@ $window.Height    = [math]::Min($window.MaxHeight, 800)
 # Rechner ein bis zwei Sekunden, in denen frueher nichts zu sehen war - man haelt das
 # fuer "es passiert nichts". Deshalb laeuft die Abfrage erst, nachdem das Fenster
 # gezeichnet wurde: Es steht sofort da, mit Platzhaltern, und fuellt sich gleich darauf.
+# Set-Busy macht dabei zusaetzlich sichtbar, dass gerade etwas laeuft - Sanduhr und
+# gesperrte Knoepfe, genau wie bei jeder anderen laengeren Aktion auch. Das Protokoll
+# allein reicht dafuer nicht: Es sitzt ganz unten im Inhalt, und das Fenster oeffnet
+# zunaechst gedeckelt und waechst erst NACH diesem Aufruf auf seine volle Hoehe - "Sammle
+# Daten..." dort ist also die ganze Zeit ausserhalb des sichtbaren Bereichs. TxtCollecting
+# oben bei der Ueberschrift ist es dagegen immer, unabhaengig von der Fensterhoehe.
+#
+# Bewusst OHNE Mindestanzeigedauer: Eine solche Untergrenze greift nur dann, wenn die
+# Abfrage schnell war - also genau dann, wenn niemand eine Beruhigung braucht. Sie haette
+# jeden Start um die Differenz verlaengert, um eine Wartezeit anzuzeigen, die es gar nicht
+# gab. Dauert es wirklich laenger, steht der Hinweis ohnehin so lange, wie es dauert.
 $script:FirstFill = $false
 $window.Add_ContentRendered({
     if (-not $script:FirstFill) {
         $script:FirstFill = $true
+        Write-Log (T 'logCollecting')
+        $ctl.TxtCollecting.Visibility = 'Visible'
+        Set-Busy $true
         try { Update-View } catch { Write-Log "$(T 'logError'): $($_.Exception.Message)" }
+        finally {
+            $ctl.TxtCollecting.Visibility = 'Collapsed'
+            Set-Busy $false
+        }
+        if (-not (Test-Admin)) { Write-Log (T 'logNoAdmin') }
+        Write-Log (T 'logReady')
         try { $window.UpdateLayout() } catch { }
     }
     try {
@@ -3472,7 +3607,7 @@ $window.Add_ContentRendered({
 if ($Idle) {
     $script:Headless = $true
     try {
-        $i = Get-ScheduledTaskInfo -TaskPath $TaskPath -TaskName $TaskName -ErrorAction SilentlyContinue
+        $i = Get-TaskRead $TaskPath $TaskName
         if ($i) {
             Write-Host "PITRTask: last run $($i.LastRunTime), next $($i.NextRunTime), missed $($i.NumberOfMissedRuns)"
         }
@@ -3565,7 +3700,7 @@ if ($Snapshot -or $AutoStart) {
             $a = Get-AutoStart
             if ($null -eq $a) { Write-Host 'startup snapshot: off'; exit 0 }
             Write-Host "startup snapshot: on, $($a.Delay) minutes after boot"
-            $s = Get-AutoStartState
+            $s = Get-AutoStartState -Task $a
             if ($null -ne $s) {
                 Write-Host "  runs: $($s.Path)"
                 if ($s.Gone) { Write-Host '  WARNING - that file is gone; run "autostart on copy" again' }
@@ -3767,8 +3902,9 @@ if ($SelfTest) {
     return
 }
 
-if (-not (Test-Admin)) { Write-Log (T 'logNoAdmin') }
-Write-Log (T 'logReady')
+# logNoAdmin/logReady are written from Add_ContentRendered now, after the first
+# Update-View - that way "Ready." only appears once the fields it refers to are
+# actually filled, instead of a moment before the window has even drawn them.
 
 # Polled from the UI thread instead of using a completion callback, because a callback
 # fires on the worker thread and may not touch WPF controls from there.

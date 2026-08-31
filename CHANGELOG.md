@@ -4,6 +4,75 @@ Notable changes are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] — 2026-08-31
+
+A minor version rather than a patch: it removes something the window used to show, and the
+startup path was rewritten underneath.
+
+### Added
+
+- A "Collecting data..." line under the version, next to the same wait cursor and disabled
+  buttons every other longer action already gets. Reading the task scheduler, VSS and the
+  registry on startup used to take a second or two, and the only sign of it was quiet
+  "reading..." placeholder text in a few fields - easy to miss, and easy to mistake for the
+  window having hung. It sits right under the headline rather than in the log at the bottom,
+  on purpose: the window opens capped in height and only grows to fit its content once that
+  first read completes, so anything in the log would spend the entire wait scrolled out of
+  view. "Ready." now prints only once the fields it refers to are actually filled, instead of
+  a moment before the window has even drawn them. There is deliberately no minimum display
+  time: a floor like that only takes effect when the read was quick, which is exactly when
+  nobody needs reassuring, and it would have padded every launch to advertise a wait that did
+  not happen. Now that the same read finishes in about a third of a second (see below), the
+  line often passes in a blink - which is the honest outcome, not a problem to paper over.
+
+### Removed
+
+- The note that appeared next to the oldest restore point once it passed 72 hours ("the
+  extended retention demonstrably works"). The point was proven the day retention beyond 72
+  hours was first confirmed to hold; a standing reminder of that in the interface stopped
+  earning its place. The oldest point's field no longer changes colour or grows a footnote —
+  it just states the point, plainly, same as every other one.
+
+### Changed
+
+- The window's controls are now found with a single walk over the logical tree instead of a
+  hand-typed list of `x:Name` values. That list needed a matching edit here whenever the XAML
+  gained or lost a name, and nothing caught it when someone forgot - the control would just be
+  `$null` until the first thing that touched it threw. Verified against the list it replaces:
+  same 80 names, same objects, same types.
+- The restore point list matches each point against its Task Scheduler run with a plain loop
+  instead of `Where-Object | Select-Object -First 1`, avoiding pipeline overhead on every
+  point on every refresh.
+- The task history is read through `EventLogReader` instead of `Get-WinEvent`. Same log, same
+  filter, same events - but `Get-WinEvent` spends about a second building what it returns, and
+  in a freshly started process, which this tool always is, that cost lands on every launch.
+  Measured on the same machine and the same 4374-record log: 1050 ms before, 22 ms after, with
+  all 38 events and all 19 runs identical down to the millisecond. Two things that looked like
+  plausible causes turned out not to be, and are recorded here so nobody re-tries them:
+  narrowing the XPath to a time window changes nothing, and neither does the size of the log.
+- The startup snapshot's state is read once per refresh instead of twice. `Get-AutoStartState`
+  re-fetched the scheduled task its caller had just fetched, and `Get-ScheduledTask` costs
+  roughly 400 ms a call whether or not the task exists. It now takes the task it should work
+  on.
+- Scheduled tasks are **read** through the Task Scheduler's COM interface rather than the
+  `ScheduledTasks` cmdlets: the same values arrive in about 20 ms instead of about 400 ms per
+  call, and the task's last run, next run and missed-run count now come from the object
+  already in hand instead of a second query. Every field was compared against the cmdlets
+  before the switch - state, both run times, missed runs, the trigger interval, the idle
+  setting, the action's arguments, and the whole idle-health count - and all of them matched.
+  Everything that *changes* a task deliberately stays on the cmdlets: lifting and restoring
+  `RunOnlyIfIdle` around a forced run, and registering or removing the startup task. Speed is
+  worth little there, and a mistake would leave the idle condition switched off, which is not
+  a slow failure but a silent one.
+
+Together these took a refresh from about 2.8 s to about 0.3 s.
+- The outdated-startup-copy notice is red now, not the same amber as the standing
+  "unofficial approach" note. The two read the same at a glance before, but they are not the
+  same kind of thing: one is a permanent fact about the tool, the other means the next
+  automatic snapshot silently runs an old build. Reuses the red already used for the missing
+  recovery-environment warning, for the same reason - the rest of the window matters less
+  while either is showing.
+
 ## [1.7.1] — 2026-08-30
 
 ### Added

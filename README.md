@@ -660,7 +660,7 @@ Everything that widens what the tool can do gets a minor version.
 ## Support
 
 The tool is free and stays that way. If it saved an afternoon of reinstalling Windows, a
-coffee is welcome: [paypal.me/teslapunk](https://www.paypal.me/teslapunk). Nothing in the tool
+coffee is welcome: [paypal.me/teslapunk](https://www.paypal.com/donate?business=TX5T9PET4XKWN&item_name=PITR-Config&currency_code=EUR&no_recurring=1). Nothing in the tool
 itself ever asks for money — no notice, no link, no reminder.
 
 ## Licence

@@ -56,7 +56,7 @@ dependencies, no PowerShell modules. Copy it to a USB stick and run it anywhere.
 > rights — elevated it simply sees more of the scheduled tasks, and says so when it does not.
 
 The interface speaks **English, German, Dutch, French, Spanish, Portuguese, Italian, Polish,
-Ukrainian and Czech**. It starts in whichever one matches your Windows display language; the buttons in the top right
+Ukrainian, Czech and Simplified Chinese**. It starts in whichever one matches your Windows display language; the buttons in the top right
 switch at any time. The window also links to the project and to the
 [short guide](https://henmedia.github.io/windows-pitr-config/guide.html), which opens in the
 language you are currently using.
@@ -226,7 +226,7 @@ looks like a failure but is none: the tool works from its own full path and neve
 current directory. Since 1.4.1 that message is cleared from the console on start.
 
 A [short guide](https://henmedia.github.io/windows-pitr-config/guide.html) covers the same
-ground in all ten languages. Downloading `guide.html` next to `pitr-config.cmd` makes the
+ground in all eleven languages. Downloading `guide.html` next to `pitr-config.cmd` makes the
 tool open that local copy instead, which keeps it fully usable on a stick without a network.
 
 Browsers treat `.cmd` files as executable content, so the download may need one confirmation
@@ -591,8 +591,8 @@ executes the lower part as a script block.
 
 ## Translations
 
-The interface speaks ten languages, and corrections are more welcome than new ones. German
-is the only one a native speaker has gone through line by line. The other nine were not, so a
+The interface speaks eleven languages, and corrections are more welcome than new ones. German
+is the only one a native speaker has gone through line by line. The other ten were not, so a
 clumsy phrase, or a term no Windows user in that language would recognise, is entirely
 possible. A pull request fixing a single line is worth as much here as a whole new
 language.
@@ -604,7 +604,7 @@ $LangText = @{
     en = @{ btnApply = 'Apply' ... }
     de = @{ btnApply = 'Übernehmen' ... }
 }
-$LangCodes = @('en', 'de', 'nl', 'fr', 'es', 'pt', 'it', 'pl', 'uk', 'cs')
+$LangCodes = @('en', 'de', 'nl', 'fr', 'es', 'pt', 'it', 'pl', 'uk', 'cs', 'zh')
 ```
 
 A new language needs four things: a block copied from `en` and translated, its code appended

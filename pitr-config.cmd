@@ -2,9 +2,9 @@
 rem ===========================================================================
 rem  pitr-config.cmd
 rem  Configures Point-in-time restore / Zeitpunktwiederherstellung (Windows 11).
-rem  Ten languages: English, German, Dutch, French, Spanish, Portuguese, Italian,
-rem  Polish, Ukrainian and Czech. The one matching the Windows display language is
-rem  picked automatically.
+rem  Eleven languages: English, German, Dutch, French, Spanish, Portuguese,
+rem  Italian, Polish, Ukrainian, Czech and Simplified Chinese. The one matching the
+rem  Windows display language is picked automatically.
 rem
 rem  Single file: the complete PowerShell code sits below the #___PSCODE___
 rem  marker and is loaded from here. Just double-click it; the file requests
@@ -135,7 +135,7 @@ exit /b %errorlevel%
 #___PSCODE___
 <#
     Point-in-time restore (PITR) / Zeitpunktwiederherstellung
-    Graphical configuration tool in EN, DE, NL, FR, ES, PT, IT, PL, UK and CS.
+    Graphical configuration tool in EN, DE, NL, FR, ES, PT, IT, PL, UK, CS and ZH.
     Also drivable from the command line:  pitr-config.cmd apply freq=4h reten=5d
 
     The PITR engine reads its configuration from
@@ -176,7 +176,7 @@ $UpdateApi = 'https://api.github.com/repos/henmedia/windows-pitr-config/releases
 $script:UpdateVersion = $null
 $script:UpdateUrl     = $null
 
-# Linked from the window. The guide carries all ten languages in one page and picks
+# Linked from the window. The guide carries all eleven languages in one page and picks
 # one from the fragment. A copy of it sitting next to the .cmd wins over the online
 # version, so the tool stays fully usable on a stick without a network.
 $ProjectUrl = 'https://github.com/henmedia/windows-pitr-config'
@@ -1917,10 +1917,183 @@ uk = @{
     logCopied  = 'Стан скопійовано в буфер обміну.'
 }
 
+# ---------------------------------------------------------------- Chinese --
+# "zh" is Simplified Chinese. Windows reports the Traditional variants (zh-TW, zh-HK) as
+# "zh" as well, so one block has to serve both, as with "pt"; zh-CN has by far the larger
+# share of users. Terms follow the Chinese Windows 11 Settings app (System > Recovery):
+# 时间点还原, 还原点频率, 还原点保留期, 最大使用量. Because the feature carries that name
+# there, the headline uses it, as the German block does with its own Windows term.
+zh = @{
+    winTitle   = '时间点还原 (Point-in-time restore)'
+    headline   = '时间点还原'
+    subtitle   = 'Point-in-time restore (PITR)'
+    intro      = 'Windows 只在企业版里开放还原点频率和保留期。本工具把它们直接写进 PITR 引擎的配置，引擎本身不检查 Windows 版本。'
+    lnkGuide   = '使用说明'
+    tipProject = '在 GitHub 上打开项目主页'
+    tipGuide   = '在浏览器中打开简明说明'
+    updAvail   = '有新版本 {0} - 打开发布页'
+    tipUpdate  = '在浏览器中打开下载页。不会自动下载或安装任何东西。'
+
+    grpState   = '当前状态'
+    capSupport = '时间点还原：'
+    supOk      = '此 Windows 支持'
+    supPart    = '安装不完整'
+    supNone    = '此 Windows 没有此功能'
+    supComp    = '组件 {0}'
+    supMissCom = '快照组件未注册'
+    supMissTask= '缺少计划任务 PITRTask'
+    noteSupNone= '此 Windows 不带时间点还原：快照组件和计划任务 PITRTask 都不存在。这项功能也会通过累积更新进入已有版本，所以光看版本号说明不了问题，待安装的更新可能还会带来它。在那之前，这个窗口里的任何设置都不起作用，因此所有写入功能都已关闭；读取和复制状态仍可使用。'
+    noteSupPart= '时间点还原在这里只装了一半：{0}。这种状态下大概率不会生成快照。各项控件仍可使用，但操作后请确认是否真的生成了还原点。通常以管理员身份运行“sfc /scannow”可以修复。'
+    logNoPitr  = '此 Windows 没有时间点还原，所有写入功能已关闭。'
+    capEdition = 'Windows 版本：'
+    capLast    = '上次运行：'
+    capNext    = '下次运行：'
+    capDelta   = '计划间隔：'
+    capTaskSt  = '任务状态：'
+    tsReady    = '就绪'
+    tsQueued   = '正在等待系统空闲'
+    tsRunning  = '正在运行'
+    tsDisabled = '已禁用'
+    tsOverdue  = '已逾期'
+    missedRuns = '已跳过 {0} 次运行'
+    btnIdleChk = '检查空闲'
+    idlePartial = '（未用管理员权限统计，只计入了当前账户能看到的任务。）'
+    idleBanner = '已跳过 {0} 次运行。电脑在使用时这很正常，但也可能说明 Windows 已经完全不再报告空闲状态。'
+    idleBlocked = '自 {0} 以来 Windows 没有报告过空闲状态，此后另外 {1} 个依赖空闲的任务一个都没运行过，所以影响远不止快照。通常是某个程序或驱动让系统一直保持唤醒，在管理员命令提示符中运行“powercfg /requests”可以查出是谁。'
+    idleFine   = '空闲检测正常：系统启动以来，另外 {1} 个依赖空闲的任务中已有 {0} 个运行过，最近一次在 {2}。只是轮到运行时电脑正在被使用。'
+    idleEarly  = '另外 {0} 个依赖空闲的任务都还没运行，但系统才开机 {1}，时间太短，说明不了什么。稍后再查一次。'
+    idleChecking = '正在读取其他依赖空闲的任务……'
+    logIdleChk = '空闲检查：{0}'
+    staleSame  = '开机任务运行的是同一版本 {0} 的另一份构建，位于 {1}。'
+    noteIdle   = '还原点只在系统空闲时创建。电脑正在使用或处于关机状态时，运行会推迟，某个计划时段也可能整个被跳过。因此设定的频率只是最短间隔，并不保证。需要时可以点顶部的“立即创建快照”强制生成一个还原点。'
+
+    grpPoints  = '还原点'
+    lblCount   = '数量'
+    lblOldest  = '最早的还原点'
+    lblStorage = '卷影存储，驱动器'
+    stUsed     = '已用'
+    stAlloc    = '已预留'
+    stMax      = '上限'
+    stNoAdmin  = '无法获取（需要管理员权限）'
+    noteStore  = 'Windows 只按驱动器报告存储用量，不按单个还原点报告——所有还原点共用同一个差异区。'
+    tipStore   = '已用 = 卷影副本实际写入的数据。' + [Environment]::NewLine +
+                 '已预留 = VSS 已在磁盘上占用的空间，其他文件不能再用，但还没完全写满。' + [Environment]::NewLine +
+                 '上限 = 设定的最大值，差异区不会超过它。'
+    noteVolume = '只覆盖 Windows 所在的驱动器 {0}。其他分区和其他硬盘都不包括在内，即使它们在同一块物理硬盘上：既不会被拍进快照，还原时也不会回滚，那里的数据仍需单独备份。下面的存储上限同样只针对 {0}。还原点就放在它所保护的驱动器上：硬盘坏了，它们也一起没了。时间点还原用来对付有问题的更新或驱动，防不了硬件故障、失窃或勒索软件，不能替代备份。'
+
+    colTime    = '时间'
+    colAge     = '距今'
+    colStatus  = '状态'
+    colBuild   = '系统版本'
+    colDur     = '耗时'
+    histHint   = '除非打开任务计划程序的历史记录，否则 Windows 不记录每次快照用了多长时间。打开后会记录本机所有计划任务，而且只覆盖从那以后的运行。'
+    btnHist    = '打开任务历史记录'
+    askHist    = '要打开任务计划程序的历史记录吗？这是整个 Windows 的设置：从此本机所有计划任务都会记录到一个 10 MB 的循环日志里。已有的还原点仍然不会有耗时数据，只有从现在起的运行才有。'
+    askHistT   = '任务历史记录'
+    logHistOn  = '任务历史记录已打开。从下次运行起会显示耗时。'
+    logHistErr = '无法打开任务历史记录。'
+    askCopy    = '此文件位于网络共享或可移动驱动器上。任务以 SYSTEM 身份运行，访问网络时用的是计算机账户而不是当前登录的用户——所以即使在资源管理器里能正常打开该共享，从共享运行的开机快照通常也会失败。{0}{0}要把文件复制到 {1}，并从那里注册任务吗？{0}{0}是：复制并使用本地文件。否：仍用当前路径注册。取消：不注册。'
+    askCopyT   = '开机快照'
+    logCopyOk  = '已复制到 {0}，任务将使用该文件。'
+    loading    = '读取中……'
+    logCollecting = '正在收集数据……'
+    staleOld   = '开机任务仍在运行版本 {0}（位于 {1}），当前这份是 {2}。'
+    staleGone  = '开机任务指向 {0}，但该文件已不存在。'
+    btnAutoUpd = '更新副本'
+    logAutoUpd = '副本已更新：{0} 现在是版本 {1}。'
+    stShadowOk = '卷影副本存在'
+    stRegOnly  = '仅剩注册表记录'
+    stUnknown  = '未知（需要管理员权限）'
+
+    grpSet     = '设置'
+    capActive  = '启用此功能'
+    capFreq    = '还原点频率——两个还原点之间的间隔'
+    capReten   = '还原点保留期——每个还原点保留多久'
+    capSize    = '所有还原点的最大使用量'
+
+    optNoOver  = 'Windows 默认（不覆盖）'
+    optOn      = '开'
+    optOff     = '关'
+    optStdFreq = 'Windows 默认（24 小时）'
+    optStdRet  = 'Windows 默认（3 天 / 72 小时）'
+    unitHour   = '小时'
+    unitHours  = '小时'
+    unitDay    = '天'
+    unitDays   = '天'
+    unitMin    = '分钟'
+    unitMin1   = '分钟'
+    unitSecShort = '秒'
+    unitMinShort = '分钟'
+    unitHourShort = '小时'
+
+    btnReset   = '全部重置'
+    btnRefresh = '刷新'
+    btnApply   = '应用'
+    btnApplyNow= '应用并立即运行'
+    btnSnapNow = '立即创建快照'
+    snapHint   = '不管计划如何，马上创建一个还原点。下面的设置保持不变。'
+    tipSnapNow = '立即运行一次 PITRTask，即使电脑正在使用。不会写入任何配置。'
+    chkAuto    = '每次开机时'
+    autoHint   = 'Windows 本身会在开机时要求创建还原点，但这个请求要等系统空闲，而刚开机的电脑恰恰最忙。勾选后会强制执行。'
+    tipAuto    = '注册一个计划任务，每次开机后按所选分钟数创建一个还原点。以 SYSTEM 身份运行，无需登录。'
+    logAutoOn  = '开机快照已注册：开机后 {0} 分钟。'
+    logAutoOff = '开机快照已移除。'
+    warnPath   = '此文件不在本机固定磁盘上。任务会记住它的路径，开机时可能访问不到。'
+    grpLog     = '日志'
+
+    effective  = '当前生效'
+    source     = '来源'
+    winDefault = 'Windows 默认'
+    srcGPO     = '策略（本工具）'
+    srcCSP     = 'Intune/MDM'
+    srcUX      = '“设置”应用'
+    sizeStd    = 'Windows 默认（磁盘的 2%）'
+
+    carryOver  = '仍沿用之前的设置；下次运行时将调整为'
+    unofficial = '非官方做法：这里写入的配置值微软没有公开，将来的 Windows 版本可能会改。随时可以点“全部重置”恢复 Windows 默认。'
+    taskMissing= '找不到 PITRTask'
+    unknownTxt = '未知'
+
+    logReady   = '就绪。写入的值属于策略级别，优先于“设置”应用。'
+    logNoAdmin = '警告：没有管理员权限，无法保存任何值。'
+    logRefresh = '视图已刷新。'
+    logSaved   = '已保存。将在 PITRTask 下次运行时生效（它只在系统空闲时运行）。'
+    logCleared = '已移除覆盖 -> Windows 默认'
+    logIdleOff = '已临时取消空闲条件。'
+    logStarted = 'PITRTask 已启动，等待完成……'
+    logIdleOn  = '空闲条件已恢复。'
+    logIdleErr = '出错后已恢复空闲条件。'
+    logIdleBad = '警告：无法恢复空闲条件！'
+    logDone    = '完成。结果'
+    logNextRun = '下次运行'
+    logTook    = '用时 {0}'
+    logNoFinish= '{0} 后仍未结束——还原点正在后台完成。'
+    logRemoved = '已移除'
+    logNothing = '没有设置过任何值。'
+    logError   = '错误'
+    askReset   = '要移除本工具设置的所有值，恢复 Windows 默认吗？'
+    askResetT  = '重置'
+    capWinRE   = '恢复环境：'
+    winreOn    = '已启用'
+    winreOff   = '已关闭'
+    winreUnk   = '无法确定'
+    winreFree  = '剩余'
+    noteWinRE  = '没有恢复环境就无法应用任何还原点——回滚是在恢复环境里进行的，不是在 Windows 里。通常以管理员身份运行“reagentc /enable”就能恢复。'
+    btnWinRE   = '重启进入恢复环境'
+    tipWinRE   = '重启 Windows 并进入恢复环境，可在其中应用还原点。其他程序中未保存的内容会丢失。'
+    askWinRE   = '现在重启进入恢复环境吗？其他程序中未保存的内容会丢失。'
+    askWinRET  = '重启'
+    logWinRE   = '正在重启进入恢复环境……'
+    btnCopy    = '复制状态'
+    copyHint   = '把版本、设置及其来源、任务状态和还原点复制为文本，方便发帖或报告问题。'
+    tipCopy    = '把当前状态以纯文本复制到剪贴板：版本、设置及其来源、任务状态、还原点和存储。用于发帖或报告问题。'
+    logCopied  = '状态已复制到剪贴板。'
+}
+
 }
 
 # Order of the language buttons, and at the same time the list of supported codes.
-$LangCodes = @('en', 'de', 'nl', 'fr', 'es', 'pt', 'it', 'pl', 'uk', 'cs')
+$LangCodes = @('en', 'de', 'nl', 'fr', 'es', 'pt', 'it', 'pl', 'uk', 'cs', 'zh')
 
 # English steps in for anything a translation is missing, so a half-finished language
 # block degrades to a mixed interface instead of empty labels.
@@ -2423,6 +2596,7 @@ $xaml = @'
         <Button x:Name="BtnLangPL" Tag="pl" Content="PL" Width="38" Height="26" Margin="0,0,3,3"/>
         <Button x:Name="BtnLangUK" Tag="uk" Content="UK" Width="38" Height="26" Margin="0,0,3,3"/>
         <Button x:Name="BtnLangCS" Tag="cs" Content="CS" Width="38" Height="26" Margin="0,0,3,3"/>
+        <Button x:Name="BtnLangZH" Tag="zh" Content="ZH" Width="38" Height="26" Margin="0,0,3,3"/>
       </WrapPanel>
     </Grid>
 
@@ -3682,6 +3856,7 @@ $ctl.BtnLangIT.Add_Click({ Set-Lang 'it' })
 $ctl.BtnLangPL.Add_Click({ Set-Lang 'pl' })
 $ctl.BtnLangUK.Add_Click({ Set-Lang 'uk' })
 $ctl.BtnLangCS.Add_Click({ Set-Lang 'cs' })
+$ctl.BtnLangZH.Add_Click({ Set-Lang 'zh' })
 
 $ctl.LnkProject.Add_Click({
     try { Start-Process $ProjectUrl }

@@ -4,6 +4,14 @@ Notable changes are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Simplified Chinese (`zh`) for the interface and the guide. Windows reports the Traditional
+  variants as `zh` too, so those systems get the Simplified text, the same way `pt` serves
+  both Portuguese variants. The eleventh language button wraps onto a third row.
+
 ## [1.8.2] — 2026-08-31
 
 ### Changed
